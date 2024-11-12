@@ -1,3 +1,6 @@
+import multiprocessing
+import pickle
+
 import evogym  # type:ignore
 import gym  # type:ignore
 import neat  # type:ignore
@@ -48,13 +51,13 @@ def test(net: neat.nn.FeedForwardNetwork, render: bool = False):
     return cum_reward
 
 
-def eval_genome(genome, config):
+def eval_genome(genome, config, _genome_id, _generation):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     cum_reward = test(net, False)
     return cum_reward["robot_1"]
 
 
-def eval_genomes(genomes, config, _):
+def eval_genomes(genomes, config):
     for genome_id, genome in tqdm(genomes):
         genome.fitness = eval_genome(genome, config)
 
@@ -74,9 +77,10 @@ if __name__ == "__main__":
     pop.add_reporter(stats)
     pop.add_reporter(neat.StdOutReporter(True))
 
-    winner = pop.run(eval_genomes, n=500)
+    pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
+    winner = pop.run(pe.evaluate_fitness, n=500)
 
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
 
-    cum_reward = test(winner_net, True)
-    print(cum_reward)
+    with open("winner.pkl", "wb") as f:
+        pickle.dump(winner_net, f)

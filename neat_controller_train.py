@@ -53,7 +53,7 @@ if __name__ == "__main__":
     pop.add_reporter(neat.Checkpointer(generation_interval=2))
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
-    winner = pop.run(pe.evaluate_fitness, n=500)
+    winner = pop.run(pe.evaluate_fitness, n=250)
 
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
 

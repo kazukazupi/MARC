@@ -8,6 +8,7 @@ import numpy as np
 from tqdm import tqdm  # type:ignore
 
 import envs
+from utils import test
 
 body = np.array(
     [
@@ -23,37 +24,10 @@ structure_1 = (body.copy(), evogym.get_full_connectivity(body))
 structure_2 = (body.copy(), evogym.get_full_connectivity(body))
 
 
-def test(net: neat.nn.FeedForwardNetwork, render: bool = False):
-
-    env = gym.make("Sumo-v0", structure_1=structure_1, structure_2=structure_2)
-    obs = env.reset()
-
-    cum_reward = {"robot_1": 0.0, "robot_2": 0.0}
-
-    for i in range(500):
-
-        action_1 = net.activate(obs["robot_1"])
-        action_2 = env.action_space.sample()["robot_2"]
-
-        action = {"robot_1": action_1, "robot_2": action_2}
-
-        obs, reward, done, info = env.step(action)
-
-        cum_reward["robot_1"] += reward["robot_1"]
-        cum_reward["robot_2"] += reward["robot_2"]
-        if render:
-            env.render()
-        if done:
-            env.reset()
-
-    env.close()
-
-    return cum_reward
-
-
 def eval_genome(genome, config, _genome_id, _generation):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
-    cum_reward = test(net, False)
+    env = gym.make("Sumo-v0", structure_1=structure_1, structure_2=structure_2)
+    cum_reward = test(env, net)
     return cum_reward["robot_1"]
 
 
@@ -76,6 +50,7 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
     pop.add_reporter(neat.StdOutReporter(True))
+    pop.add_reporter(neat.Checkpointer(generation_interval=2))
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
     winner = pop.run(pe.evaluate_fitness, n=500)

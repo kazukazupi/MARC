@@ -3,4 +3,5 @@ fmt:
 	poetry run isort ./
 
 lint:
-	mypy ./
+	poetry run mypy ./
+	poetry run flake8 ./

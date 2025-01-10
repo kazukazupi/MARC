@@ -1,10 +1,11 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from evogym import EvoWorld  # type:ignore
-from evogym.envs import EvoGymBase  # type:ignore
-from gymnasium import spaces  # type:ignore
+import numpy.typing as npt
+from evogym import EvoWorld
+from evogym.envs import EvoGymBase
+from gymnasium import spaces
 
 ROBOT_1 = "robot_1"
 ROBOT_2 = "robot_2"
@@ -13,8 +14,8 @@ ROBOT_2 = "robot_2"
 class SimpleSumoEnvClass(EvoGymBase):
     def __init__(
         self,
-        structure_1,
-        structure_2,
+        structure_1: Tuple[npt.NDArray[np.int32], npt.NDArray[np.int32]],
+        structure_2: Tuple[npt.NDArray[np.int32], npt.NDArray[np.int32]],
         render_mode: Optional[str] = None,
         render_options: Optional[Dict[str, Any]] = None,
     ):
@@ -58,7 +59,9 @@ class SimpleSumoEnvClass(EvoGymBase):
         # set viewer
         self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
 
-    def step(self, action):
+    def step(
+        self, action: Dict[str, npt.NDArray[np.float32]]
+    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, float], bool, bool, Dict[str, Any]]:
 
         # collect pre step information
         robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
@@ -94,7 +97,9 @@ class SimpleSumoEnvClass(EvoGymBase):
 
         return obs, reward, done, False, {}
 
-    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None):
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, Any]]:
 
         super().reset(seed=seed, options=options)
         obs = self.calc_obs()
@@ -103,9 +108,9 @@ class SimpleSumoEnvClass(EvoGymBase):
 
     def calc_obs(
         self,
-        robot_pos_final: Optional[List[np.ndarray]] = None,
-        robot_com_pos_final: Optional[List[np.ndarray]] = None,
-    ):
+        robot_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
+        robot_com_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
+    ) -> Dict[str, npt.NDArray[np.float32]]:
 
         # collect post step information
         if robot_pos_final is None:

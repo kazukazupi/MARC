@@ -1,5 +1,5 @@
-import gymnasium as gym  # type:ignore
-from evogym import sample_robot  # type:ignore
+import gymnasium as gym
+from evogym import sample_robot
 
 import envs
 

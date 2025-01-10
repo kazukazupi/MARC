@@ -11,6 +11,12 @@ evogym = "2.0.0"
 torch = "1.12.0"
 gymnasium = "0.28.1"
 
+[tool.black]
+line-length = 119
+
+[tool.isort]
+profile = "black"
+line_length = 119
 
 [build-system]
 requires = ["poetry-core"]

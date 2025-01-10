@@ -1,6 +1,6 @@
 fmt:
-	black ./
-	isort ./
+	poetry run black ./
+	poetry run isort ./
 
 lint:
 	mypy ./

@@ -1,4 +1,4 @@
-from gym.envs.registration import register  # type:ignore
+from gymnasium.envs.registration import register  # type:ignore
 
 from envs.sumo_env import SimpleSumoEnvClass
 

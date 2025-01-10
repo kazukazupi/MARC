@@ -1,13 +1,20 @@
 import os
+from typing import Any, Dict, Optional
 
 import numpy as np
 from evogym import EvoWorld  # type:ignore
 from evogym.envs import EvoGymBase  # type:ignore
-from gym import spaces  # type:ignore
+from gymnasium import spaces  # type:ignore
 
 
 class SimpleSumoEnvClass(EvoGymBase):
-    def __init__(self, structure_1, structure_2):
+    def __init__(
+        self,
+        structure_1,
+        structure_2,
+        render_mode: Optional[str] = None,
+        render_options: Optional[Dict[str, Any]] = None,
+    ):
 
         # parse structures
         body_1, connections_1 = structure_1
@@ -23,7 +30,7 @@ class SimpleSumoEnvClass(EvoGymBase):
         self.world.add_from_array("robot_2", body_2, 16, 1, connections=connections_2)
 
         # init sim
-        EvoGymBase.__init__(self, self.world)
+        EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
         # set action space and observation space
         num_actuators_1 = self.get_actuator_indices("robot_1").size
@@ -49,13 +56,13 @@ class SimpleSumoEnvClass(EvoGymBase):
                     low=-100.0,
                     high=100.0,
                     shape=(6 + num_robot_points_1,),
-                    dtype=np.float32,
+                    dtype=float,
                 ),
                 "robot_2": spaces.Box(
                     low=-100.0,
                     high=100.0,
                     shape=(6 + num_robot_points_2,),
-                    dtype=np.float32,
+                    dtype=float,
                 ),
             }
         )
@@ -140,11 +147,13 @@ class SimpleSumoEnvClass(EvoGymBase):
 
         obs = {"robot_1": obs1, "robot_2": obs2}
 
-        return obs, reward, done, {}
+        return obs, reward, done, False, {}
 
-    def reset(self):
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ):
 
-        super().reset()
+        super().reset(seed=seed, options=options)
 
         # collect post step information
         robot_1_pos_final = self.object_pos_at_time(self.get_time(), "robot_1")
@@ -195,4 +204,4 @@ class SimpleSumoEnvClass(EvoGymBase):
         )
 
         obs = {"robot_1": obs1, "robot_2": obs2}
-        return obs
+        return obs, {}

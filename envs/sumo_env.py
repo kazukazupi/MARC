@@ -6,6 +6,9 @@ from evogym import EvoWorld  # type:ignore
 from evogym.envs import EvoGymBase  # type:ignore
 from gymnasium import spaces  # type:ignore
 
+ROBOT_1 = "robot_1"
+ROBOT_2 = "robot_2"
+
 
 class SimpleSumoEnvClass(EvoGymBase):
     def __init__(
@@ -25,26 +28,26 @@ class SimpleSumoEnvClass(EvoGymBase):
             os.path.join("world_data", "simple_sumo_env.json")
         )
         self.world.add_from_array(
-            "robot_1", body_1, 15 - body_1.shape[1], 1, connections=connections_1
+            ROBOT_1, body_1, 15 - body_1.shape[1], 1, connections=connections_1
         )
-        self.world.add_from_array("robot_2", body_2, 16, 1, connections=connections_2)
+        self.world.add_from_array(ROBOT_2, body_2, 16, 1, connections=connections_2)
 
         # init sim
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
         # set action space and observation space
-        num_actuators_1 = self.get_actuator_indices("robot_1").size
-        num_actuators_2 = self.get_actuator_indices("robot_2").size
+        num_actuators_1 = self.get_actuator_indices(ROBOT_1).size
+        num_actuators_2 = self.get_actuator_indices(ROBOT_2).size
 
-        num_robot_points_1 = self.object_pos_at_time(self.get_time(), "robot_1").size
-        num_robot_points_2 = self.object_pos_at_time(self.get_time(), "robot_2").size
+        num_robot_points_1 = self.object_pos_at_time(self.get_time(), ROBOT_1).size
+        num_robot_points_2 = self.object_pos_at_time(self.get_time(), ROBOT_2).size
 
         self.action_space = spaces.Dict(
             {
-                "robot_1": spaces.Box(
+                ROBOT_1: spaces.Box(
                     low=0.6, high=1.6, shape=(num_actuators_1,), dtype=np.float32
                 ),
-                "robot_2": spaces.Box(
+                ROBOT_2: spaces.Box(
                     low=0.6, high=1.6, shape=(num_actuators_2,), dtype=np.float32
                 ),
             }
@@ -52,13 +55,13 @@ class SimpleSumoEnvClass(EvoGymBase):
 
         self.observation_space = spaces.Dict(
             {
-                "robot_1": spaces.Box(
+                ROBOT_1: spaces.Box(
                     low=-100.0,
                     high=100.0,
                     shape=(6 + num_robot_points_1,),
                     dtype=float,
                 ),
-                "robot_2": spaces.Box(
+                ROBOT_2: spaces.Box(
                     low=-100.0,
                     high=100.0,
                     shape=(6 + num_robot_points_2,),
@@ -68,22 +71,22 @@ class SimpleSumoEnvClass(EvoGymBase):
         )
 
         # set viewer
-        self.default_viewer.track_objects("robot_1", "robot_2")
+        self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
 
     def step(self, action):
 
         # collect pre step information
-        robot_1_pos_init = self.object_pos_at_time(self.get_time(), "robot_1")
-        robot_2_pos_init = self.object_pos_at_time(self.get_time(), "robot_2")
+        robot_1_pos_init = self.object_pos_at_time(self.get_time(), ROBOT_1)
+        robot_2_pos_init = self.object_pos_at_time(self.get_time(), ROBOT_2)
 
         # When this is True, the simulation has reached an unstable state from which it cannot recover
         done = super().step(action)
 
         # collect post step information
-        robot_1_pos_final = self.object_pos_at_time(self.get_time(), "robot_1")
-        robot_1_vel_final = self.object_vel_at_time(self.get_time(), "robot_1")
-        robot_2_pos_final = self.object_pos_at_time(self.get_time(), "robot_2")
-        robot_2_vel_final = self.object_vel_at_time(self.get_time(), "robot_2")
+        robot_1_pos_final = self.object_pos_at_time(self.get_time(), ROBOT_1)
+        robot_1_vel_final = self.object_vel_at_time(self.get_time(), ROBOT_1)
+        robot_2_pos_final = self.object_pos_at_time(self.get_time(), ROBOT_2)
+        robot_2_vel_final = self.object_vel_at_time(self.get_time(), ROBOT_2)
 
         # calculate positions and velocities of center of mass
         robot_1_com_pos_init = np.mean(robot_1_pos_init, 1)
@@ -96,7 +99,7 @@ class SimpleSumoEnvClass(EvoGymBase):
         # calculate reward
         reward_1 = robot_1_com_pos_final[0] - robot_1_com_pos_init[0]
         reward_2 = -(robot_2_com_pos_final[0] - robot_2_com_pos_init[0])
-        reward = {"robot_1": reward_1, "robot_2": reward_2}
+        reward = {ROBOT_1: reward_1, ROBOT_2: reward_2}
 
         if done:
             print("SIMULATION UNSTABLE... TERMINATING")
@@ -125,7 +128,7 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs("robot_1"),
+                self.get_relative_pos_obs(ROBOT_1),
             )
         )
 
@@ -141,11 +144,11 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs("robot_2"),
+                self.get_relative_pos_obs(ROBOT_2),
             )
         )
 
-        obs = {"robot_1": obs1, "robot_2": obs2}
+        obs = {ROBOT_1: obs1, ROBOT_2: obs2}
 
         return obs, reward, done, False, {}
 
@@ -156,10 +159,10 @@ class SimpleSumoEnvClass(EvoGymBase):
         super().reset(seed=seed, options=options)
 
         # collect post step information
-        robot_1_pos_final = self.object_pos_at_time(self.get_time(), "robot_1")
-        robot_1_vel_final = self.object_vel_at_time(self.get_time(), "robot_1")
-        robot_2_pos_final = self.object_pos_at_time(self.get_time(), "robot_2")
-        robot_2_vel_final = self.object_vel_at_time(self.get_time(), "robot_2")
+        robot_1_pos_final = self.object_pos_at_time(self.get_time(), ROBOT_1)
+        robot_1_vel_final = self.object_vel_at_time(self.get_time(), ROBOT_1)
+        robot_2_pos_final = self.object_pos_at_time(self.get_time(), ROBOT_2)
+        robot_2_vel_final = self.object_vel_at_time(self.get_time(), ROBOT_2)
 
         # calculate positions and velocities of center of mass
         robot_1_com_pos_final = np.mean(robot_1_pos_final, 1)
@@ -183,7 +186,7 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs("robot_1"),
+                self.get_relative_pos_obs(ROBOT_1),
             )
         )
 
@@ -199,9 +202,9 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs("robot_2"),
+                self.get_relative_pos_obs(ROBOT_2),
             )
         )
 
-        obs = {"robot_1": obs1, "robot_2": obs2}
+        obs = {ROBOT_1: obs1, ROBOT_2: obs2}
         return obs, {}

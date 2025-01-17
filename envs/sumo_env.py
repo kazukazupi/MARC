@@ -14,15 +14,13 @@ ROBOT_2 = "robot_2"
 class SimpleSumoEnvClass(EvoGymBase):
     def __init__(
         self,
-        structure_1: Tuple[npt.NDArray[np.int32], npt.NDArray[np.int32]],
-        structure_2: Tuple[npt.NDArray[np.int32], npt.NDArray[np.int32]],
+        body_1: npt.NDArray[np.int32],
+        body_2: npt.NDArray[np.int32],
+        connections_1: Optional[npt.NDArray[np.int32]] = None,
+        connections_2: Optional[npt.NDArray[np.int32]] = None,
         render_mode: Optional[str] = None,
         render_options: Optional[Dict[str, Any]] = None,
     ):
-
-        # parse structures
-        body_1, connections_1 = structure_1
-        body_2, connections_2 = structure_2
 
         # make world
         self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))

@@ -1,17 +1,19 @@
-import gymnasium as gym  # type:ignore
-from evogym import sample_robot  # type:ignore
+import gymnasium as gym
+from evogym import sample_robot
 
 import envs
 
 if __name__ == "__main__":
 
-    structure_1 = sample_robot((5, 5))
-    structure_2 = sample_robot((5, 5))
+    body_1, connections_1 = sample_robot((5, 5))
+    body_2, connections_2 = sample_robot((5, 5))
 
     env = gym.make(
         "Sumo-v0",
-        structure_1=structure_1,
-        structure_2=structure_2,
+        body_1=body_1,
+        body_2=body_2,
+        connections_1=connections_1,
+        connections_2=connections_2,
         render_mode="human",
     )
     env.reset()
@@ -26,6 +28,7 @@ if __name__ == "__main__":
         cum_reward_2 += reward["robot_2"]
         if terminated or truncated:
             env.reset()
+            break
     env.close()
 
     print("Cumulative reward for robot 1: {}".format(cum_reward_1))

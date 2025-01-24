@@ -114,13 +114,13 @@ def main():
             print(
                 "Updates {}, num timesteps {}\nLast {} training episodes:"
                 "mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n".format(
-                j,
-                total_num_steps,
-                len(episode_rewards),
-                np.mean(episode_rewards),
-                np.median(episode_rewards),
-                np.min(episode_rewards),
-                np.max(episode_rewards),
+                    j,
+                    total_num_steps,
+                    len(episode_rewards),
+                    np.mean(episode_rewards),
+                    np.median(episode_rewards),
+                    np.min(episode_rewards),
+                    np.max(episode_rewards),
                 )
             )
 

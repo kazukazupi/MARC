@@ -4,14 +4,10 @@ from copy import copy
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import numpy.typing as npt
 from evogym import EvoWorld
 from evogym.envs import EvoGymBase
 from gymnasium import spaces
 from pettingzoo import ParallelEnv
-
-ROBOT_1 = "robot_1"
-ROBOT_2 = "robot_2"
 
 ObsType = np.ndarray
 ActionType = np.ndarray
@@ -40,60 +36,56 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
-        self.possible_agents = [ROBOT_1, ROBOT_2]
+        self.possible_agents = ["robot_1", "robot_2"]
 
         # make world
         self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))
-        self.world.add_from_array(ROBOT_1, body_1, 15 - body_1.shape[1], 1, connections=connections_1)
-        self.world.add_from_array(ROBOT_2, body_2, 16, 1, connections=connections_2)
+        self.world.add_from_array(self.possible_agents[0], body_1, 15 - body_1.shape[1], 1, connections=connections_1)
+        self.world.add_from_array(self.possible_agents[1], body_2, 16, 1, connections=connections_2)
 
         # init sim
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
         # set viewer
-        self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
+        self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
         # collect pre step information
-        robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # When this is True, the simulation has reached an unstable state from which it cannot recover
         done = super().step(action)
 
         # collect post step information
-        robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # calculate positions and velocities of center of mass
         robot_com_pos_init = [np.mean(pos, 1) for pos in robot_pos_init]
         robot_com_pos_final = [np.mean(pos, 1) for pos in robot_pos_final]
 
         # calculate reward
-        reward_1 = robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
-        reward_2 = -(robot_com_pos_final[1][0] - robot_com_pos_init[1][0])
+        rewards = {a: 0.0 for a in self.agents}
+        rewards[self.agents[0]] += robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
+        rewards[self.agents[1]] += -(robot_com_pos_final[1][0] - robot_com_pos_init[1][0])
 
         if done:
             print("SIMULATION UNSTABLE... TERMINATING")
         if robot_com_pos_final[0][0] > 28:
             done = True
-            reward_1 += 1.0
-            reward_2 -= 1.0
+            rewards[self.agents[0]] -= 1.0
+            rewards[self.agents[1]] += 1.0
         if robot_com_pos_final[1][0] < 2:
             done = True
-            reward_1 -= 1.0
-            reward_2 += 1.0
-
-        reward = {ROBOT_1: reward_1, ROBOT_2: reward_2}
+            rewards[self.agents[0]] += 1.0
+            rewards[self.agents[1]] -= 1.0
 
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
+        terminations = {a: done for a in self.agents}
+        truncations = {a: False for a in self.agents}
+        infos: InfoDict = {a: {} for a in self.agents}
 
-        return (
-            obs,
-            reward,
-            {ROBOT_1: done, ROBOT_2: done},
-            {ROBOT_1: False, ROBOT_2: False},
-            {ROBOT_1: {}, ROBOT_2: {}},
-        )
+        return obs, rewards, terminations, truncations, infos
 
     def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
 
@@ -101,8 +93,9 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
 
         super().reset(seed=seed, options=options)
         obs = self.calc_obs()
+        infos: InfoDict = {a: {} for a in self.agents}
 
-        return obs, {ROBOT_1: {}, ROBOT_2: {}}
+        return obs, infos
 
     def calc_obs(
         self,
@@ -112,9 +105,9 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
 
         # collect post step information
         if robot_pos_final is None:
-            robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+            robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
-        robot_vel_final = [self.object_vel_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_vel_final = [self.object_vel_at_time(self.get_time(), obj) for obj in self.agents]
 
         # calculate positions and velocities of center of mass
         if robot_com_pos_final is None:
@@ -137,7 +130,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs(ROBOT_1),
+                self.get_relative_pos_obs(self.agents[0]),
             )
         )
 
@@ -153,11 +146,11 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs(ROBOT_2),
+                self.get_relative_pos_obs(self.agents[1]),
             )
         )
 
-        obs = {ROBOT_1: obs1, ROBOT_2: obs2}
+        obs = {self.agents[0]: obs1, self.agents[1]: obs2}
 
         return obs
 

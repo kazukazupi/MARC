@@ -37,6 +37,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
     ):
 
         self.possible_agents = ["robot_1", "robot_2"]
+        self.timestep: Optional[int] = None
 
         # make world
         self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))
@@ -50,6 +51,8 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
+
+        assert self.timestep is not None, "You must call reset before calling step"
 
         # collect pre step information
         robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
@@ -80,9 +83,15 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
             rewards[self.agents[0]] += 1.0
             rewards[self.agents[1]] -= 1.0
 
+        if self.timestep > 1000:
+            rewards = {a: 0.0 for a in self.agents}
+            truncations = {a: True for a in self.agents}
+        else:
+            truncations = {a: False for a in self.agents}
+        self.timestep += 1
+
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
         terminations = {a: done for a in self.agents}
-        truncations = {a: False for a in self.agents}
         infos: InfoDict = {a: {} for a in self.agents}
 
         return obs, rewards, terminations, truncations, infos
@@ -90,6 +99,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
     def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
 
         self.agents = copy(self.possible_agents)
+        self.timestep = 0
 
         super().reset(seed=seed, options=options)
         obs = self.calc_obs()

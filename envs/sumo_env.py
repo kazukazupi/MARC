@@ -1,4 +1,6 @@
+import functools
 import os
+from copy import copy
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -6,12 +8,18 @@ import numpy.typing as npt
 from evogym import EvoWorld
 from evogym.envs import EvoGymBase
 from gymnasium import spaces
+from pettingzoo import ParallelEnv
 
 ROBOT_1 = "robot_1"
 ROBOT_2 = "robot_2"
 
 
-class SimpleSumoEnvClass(EvoGymBase):
+class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
+
+    metadata = {
+        "name": "Sumo-v0",
+    }
+
     def __init__(
         self,
         body_1: npt.NDArray[np.int32],
@@ -22,6 +30,8 @@ class SimpleSumoEnvClass(EvoGymBase):
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
+        self.possible_agents = [ROBOT_1, ROBOT_2]
+
         # make world
         self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))
         self.world.add_from_array(ROBOT_1, body_1, 15 - body_1.shape[1], 1, connections=connections_1)
@@ -29,30 +39,6 @@ class SimpleSumoEnvClass(EvoGymBase):
 
         # init sim
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
-
-        # set action space and observation space
-        num_actuators = [self.get_actuator_indices(obj).size for obj in [ROBOT_1, ROBOT_2]]
-
-        num_robot_points = [self.object_pos_at_time(self.get_time(), obj).size for obj in [ROBOT_1, ROBOT_2]]
-
-        self.action_space = spaces.Dict(
-            {
-                obj: spaces.Box(low=0.6, high=1.6, shape=(num_actuators[i],), dtype=float)
-                for i, obj in enumerate([ROBOT_1, ROBOT_2])
-            }
-        )
-
-        self.observation_space = spaces.Dict(
-            {
-                obj: spaces.Box(
-                    low=-100.0,
-                    high=100.0,
-                    shape=(6 + num_robot_points[i],),
-                    dtype=float,
-                )
-                for i, obj in enumerate([ROBOT_1, ROBOT_2])
-            }
-        )
 
         # set viewer
         self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
@@ -93,16 +79,24 @@ class SimpleSumoEnvClass(EvoGymBase):
 
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
 
-        return obs, reward, done, False, {}
+        return (
+            obs,
+            reward,
+            {ROBOT_1: done, ROBOT_2: done},
+            {ROBOT_1: False, ROBOT_2: False},
+            {ROBOT_1: {}, ROBOT_2: {}},
+        )
 
     def reset(
         self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
     ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, Any]]:
 
+        self.agents = copy(self.possible_agents)
+
         super().reset(seed=seed, options=options)
         obs = self.calc_obs()
 
-        return obs, {}
+        return obs, {ROBOT_1: {}, ROBOT_2: {}}
 
     def calc_obs(
         self,
@@ -160,3 +154,27 @@ class SimpleSumoEnvClass(EvoGymBase):
         obs = {ROBOT_1: obs1, ROBOT_2: obs2}
 
         return obs
+
+    @functools.lru_cache(maxsize=None)
+    def observation_space(self, agent):
+
+        num_robot_points = self.object_pos_at_time(self.get_time(), agent).size
+
+        return spaces.Box(
+            low=-100.0,
+            high=100.0,
+            shape=(6 + num_robot_points,),
+            dtype=float,
+        )
+
+    @functools.lru_cache(maxsize=None)
+    def action_space(self, agent):
+
+        num_actuators = self.get_actuator_indices(agent).size
+
+        return spaces.Box(
+            low=0.6,
+            high=1.6,
+            shape=(num_actuators,),
+            dtype=float,
+        )

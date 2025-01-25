@@ -37,6 +37,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
     ):
 
         self.possible_agents = ["robot_1", "robot_2"]
+        self.agents: List[str] = []
         self.timestep: Optional[int] = None
 
         self.height_thresh = 1.02
@@ -97,7 +98,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
             terminations = {a: False for a in self.agents}
 
         # judge truncation
-        if self.timestep > 2000:
+        if self.timestep >= 1000:
             rewards = {a: 0.0 for a in self.agents}
             truncations = {a: True for a in self.agents}
         else:
@@ -107,6 +108,9 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         # return
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
         infos: InfoDict = {a: {} for a in self.agents}
+
+        if all(terminations.values()) or all(truncations.values()):
+            self.agents = []
 
         return obs, rewards, terminations, truncations, infos
 

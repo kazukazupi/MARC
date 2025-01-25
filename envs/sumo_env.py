@@ -39,10 +39,12 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         self.possible_agents = ["robot_1", "robot_2"]
         self.timestep: Optional[int] = None
 
+        self.height_thresh = 1.02
+
         # make world
-        self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))
-        self.world.add_from_array(self.possible_agents[0], body_1, 15 - body_1.shape[1], 1, connections=connections_1)
-        self.world.add_from_array(self.possible_agents[1], body_2, 16, 1, connections=connections_2)
+        self.world = EvoWorld.from_json(os.path.join("world_data", "sumo_env.json"))
+        self.world.add_from_array(self.possible_agents[0], body_1, 8, 3, connections=connections_1)
+        self.world.add_from_array(self.possible_agents[1], body_2, 27 - body_2.shape[1], 3, connections=connections_2)
 
         # init sim
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
@@ -58,7 +60,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # When this is True, the simulation has reached an unstable state from which it cannot recover
-        done = super().step(action)
+        is_unstable = super().step(action)
 
         # collect post step information
         robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
@@ -67,31 +69,43 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         robot_com_pos_init = [np.mean(pos, 1) for pos in robot_pos_init]
         robot_com_pos_final = [np.mean(pos, 1) for pos in robot_pos_final]
 
+        # calculate minimum height for each robot
+        min_heights = [np.min(pos[1]) for pos in robot_pos_final]
+
         # calculate reward
         rewards = {a: 0.0 for a in self.agents}
         rewards[self.agents[0]] += robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
         rewards[self.agents[1]] += -(robot_com_pos_final[1][0] - robot_com_pos_init[1][0])
 
-        if done:
-            print("SIMULATION UNSTABLE... TERMINATING")
-        if robot_com_pos_final[0][0] > 28:
-            done = True
+        # judge termination
+        terminations = {a: True for a in self.agents}
+
+        if min_heights[0] < self.height_thresh and min_heights[1] < self.height_thresh:
+            for a in self.agents:
+                rewards[a] -= 1.0
+        elif min_heights[0] < self.height_thresh:
             rewards[self.agents[0]] -= 1.0
             rewards[self.agents[1]] += 1.0
-        if robot_com_pos_final[1][0] < 2:
-            done = True
+        elif min_heights[1] < self.height_thresh:
             rewards[self.agents[0]] += 1.0
             rewards[self.agents[1]] -= 1.0
+        elif is_unstable:
+            print("SIMULATION UNSTABLE... TERMINATING")
+            for a in self.agents:
+                rewards[a] -= 1.0
+        else:
+            terminations = {a: False for a in self.agents}
 
-        if self.timestep > 1000:
+        # judge truncation
+        if self.timestep > 2000:
             rewards = {a: 0.0 for a in self.agents}
             truncations = {a: True for a in self.agents}
         else:
             truncations = {a: False for a in self.agents}
         self.timestep += 1
 
+        # return
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
-        terminations = {a: done for a in self.agents}
         infos: InfoDict = {a: {} for a in self.agents}
 
         return obs, rewards, terminations, truncations, infos

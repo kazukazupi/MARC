@@ -13,6 +13,16 @@ from pettingzoo import ParallelEnv
 ROBOT_1 = "robot_1"
 ROBOT_2 = "robot_2"
 
+ObsType = np.ndarray
+ActionType = np.ndarray
+AgentID = str
+
+ObsDict = Dict[AgentID, ObsType]
+ActionDict = Dict[AgentID, ActionType]
+RewardDict = Dict[AgentID, float]
+BoolDict = Dict[AgentID, bool]
+InfoDict = Dict[AgentID, Dict[str, Any]]
+
 
 class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
 
@@ -22,10 +32,10 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
 
     def __init__(
         self,
-        body_1: npt.NDArray[np.int32],
-        body_2: npt.NDArray[np.int32],
-        connections_1: Optional[npt.NDArray[np.int32]] = None,
-        connections_2: Optional[npt.NDArray[np.int32]] = None,
+        body_1: np.ndarray,
+        body_2: np.ndarray,
+        connections_1: Optional[np.ndarray] = None,
+        connections_2: Optional[np.ndarray] = None,
         render_mode: Optional[str] = None,
         render_options: Optional[Dict[str, Any]] = None,
     ):
@@ -43,9 +53,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         # set viewer
         self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
 
-    def step(
-        self, action: Dict[str, npt.NDArray[np.float32]]
-    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, float], bool, bool, Dict[str, Any]]:
+    def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
         # collect pre step information
         robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
@@ -87,9 +95,7 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
             {ROBOT_1: {}, ROBOT_2: {}},
         )
 
-    def reset(
-        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
-    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, Any]]:
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
 
         self.agents = copy(self.possible_agents)
 
@@ -100,9 +106,9 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
 
     def calc_obs(
         self,
-        robot_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
-        robot_com_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
-    ) -> Dict[str, npt.NDArray[np.float32]]:
+        robot_pos_final: Optional[List[np.ndarray]] = None,
+        robot_com_pos_final: Optional[List[np.ndarray]] = None,
+    ) -> ObsDict:
 
         # collect post step information
         if robot_pos_final is None:

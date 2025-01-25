@@ -1,120 +1,141 @@
+import functools
 import os
+from copy import copy
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import numpy.typing as npt
 from evogym import EvoWorld
 from evogym.envs import EvoGymBase
 from gymnasium import spaces
+from pettingzoo import ParallelEnv
 
-ROBOT_1 = "robot_1"
-ROBOT_2 = "robot_2"
+ObsType = np.ndarray
+ActionType = np.ndarray
+AgentID = str
+
+ObsDict = Dict[AgentID, ObsType]
+ActionDict = Dict[AgentID, ActionType]
+RewardDict = Dict[AgentID, float]
+BoolDict = Dict[AgentID, bool]
+InfoDict = Dict[AgentID, Dict[str, Any]]
 
 
-class SimpleSumoEnvClass(EvoGymBase):
+class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
+
+    metadata = {
+        "name": "Sumo-v0",
+    }
+
     def __init__(
         self,
-        body_1: npt.NDArray[np.int32],
-        body_2: npt.NDArray[np.int32],
-        connections_1: Optional[npt.NDArray[np.int32]] = None,
-        connections_2: Optional[npt.NDArray[np.int32]] = None,
+        body_1: np.ndarray,
+        body_2: np.ndarray,
+        connections_1: Optional[np.ndarray] = None,
+        connections_2: Optional[np.ndarray] = None,
         render_mode: Optional[str] = None,
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
+        self.possible_agents = ["robot_1", "robot_2"]
+        self.agents: List[str] = []
+        self.timestep: Optional[int] = None
+
+        self.height_thresh = 1.02
+
         # make world
-        self.world = EvoWorld.from_json(os.path.join("world_data", "simple_sumo_env.json"))
-        self.world.add_from_array(ROBOT_1, body_1, 15 - body_1.shape[1], 1, connections=connections_1)
-        self.world.add_from_array(ROBOT_2, body_2, 16, 1, connections=connections_2)
+        self.world = EvoWorld.from_json(os.path.join("world_data", "sumo_env.json"))
+        self.world.add_from_array(self.possible_agents[0], body_1, 8, 3, connections=connections_1)
+        self.world.add_from_array(self.possible_agents[1], body_2, 27 - body_2.shape[1], 3, connections=connections_2)
 
         # init sim
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
-        # set action space and observation space
-        num_actuators = [self.get_actuator_indices(obj).size for obj in [ROBOT_1, ROBOT_2]]
-
-        num_robot_points = [self.object_pos_at_time(self.get_time(), obj).size for obj in [ROBOT_1, ROBOT_2]]
-
-        self.action_space = spaces.Dict(
-            {
-                obj: spaces.Box(low=0.6, high=1.6, shape=(num_actuators[i],), dtype=float)
-                for i, obj in enumerate([ROBOT_1, ROBOT_2])
-            }
-        )
-
-        self.observation_space = spaces.Dict(
-            {
-                obj: spaces.Box(
-                    low=-100.0,
-                    high=100.0,
-                    shape=(6 + num_robot_points[i],),
-                    dtype=float,
-                )
-                for i, obj in enumerate([ROBOT_1, ROBOT_2])
-            }
-        )
-
         # set viewer
-        self.default_viewer.track_objects(ROBOT_1, ROBOT_2)
+        self.default_viewer.track_objects(*self.possible_agents)
 
-    def step(
-        self, action: Dict[str, npt.NDArray[np.float32]]
-    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, float], bool, bool, Dict[str, Any]]:
+    def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
+
+        assert self.timestep is not None, "You must call reset before calling step"
 
         # collect pre step information
-        robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # When this is True, the simulation has reached an unstable state from which it cannot recover
-        done = super().step(action)
+        is_unstable = super().step(action)
 
         # collect post step information
-        robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # calculate positions and velocities of center of mass
         robot_com_pos_init = [np.mean(pos, 1) for pos in robot_pos_init]
         robot_com_pos_final = [np.mean(pos, 1) for pos in robot_pos_final]
 
+        # calculate minimum height for each robot
+        min_heights = [np.min(pos[1]) for pos in robot_pos_final]
+
         # calculate reward
-        reward_1 = robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
-        reward_2 = -(robot_com_pos_final[1][0] - robot_com_pos_init[1][0])
+        rewards = {a: 0.0 for a in self.agents}
+        rewards[self.agents[0]] += robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
+        rewards[self.agents[1]] += -(robot_com_pos_final[1][0] - robot_com_pos_init[1][0])
 
-        if done:
+        # judge termination
+        terminations = {a: True for a in self.agents}
+
+        if min_heights[0] < self.height_thresh and min_heights[1] < self.height_thresh:
+            for a in self.agents:
+                rewards[a] -= 1.0
+        elif min_heights[0] < self.height_thresh:
+            rewards[self.agents[0]] -= 1.0
+            rewards[self.agents[1]] += 1.0
+        elif min_heights[1] < self.height_thresh:
+            rewards[self.agents[0]] += 1.0
+            rewards[self.agents[1]] -= 1.0
+        elif is_unstable:
             print("SIMULATION UNSTABLE... TERMINATING")
-        if robot_com_pos_final[0][0] > 28:
-            done = True
-            reward_1 += 1.0
-            reward_2 -= 1.0
-        if robot_com_pos_final[1][0] < 2:
-            done = True
-            reward_1 -= 1.0
-            reward_2 += 1.0
+            for a in self.agents:
+                rewards[a] -= 1.0
+        else:
+            terminations = {a: False for a in self.agents}
 
-        reward = {ROBOT_1: reward_1, ROBOT_2: reward_2}
+        # judge truncation
+        if self.timestep >= 1000:
+            rewards = {a: 0.0 for a in self.agents}
+            truncations = {a: True for a in self.agents}
+        else:
+            truncations = {a: False for a in self.agents}
+        self.timestep += 1
 
+        # return
         obs = self.calc_obs(robot_pos_final, robot_com_pos_final)
+        infos: InfoDict = {a: {} for a in self.agents}
 
-        return obs, reward, done, False, {}
+        if all(terminations.values()) or all(truncations.values()):
+            self.agents = []
 
-    def reset(
-        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
-    ) -> Tuple[Dict[str, npt.NDArray[np.float32]], Dict[str, Any]]:
+        return obs, rewards, terminations, truncations, infos
+
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
+
+        self.agents = copy(self.possible_agents)
+        self.timestep = 0
 
         super().reset(seed=seed, options=options)
         obs = self.calc_obs()
+        infos: InfoDict = {a: {} for a in self.agents}
 
-        return obs, {}
+        return obs, infos
 
     def calc_obs(
         self,
-        robot_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
-        robot_com_pos_final: Optional[List[npt.NDArray[np.float32]]] = None,
-    ) -> Dict[str, npt.NDArray[np.float32]]:
+        robot_pos_final: Optional[List[np.ndarray]] = None,
+        robot_com_pos_final: Optional[List[np.ndarray]] = None,
+    ) -> ObsDict:
 
         # collect post step information
         if robot_pos_final is None:
-            robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+            robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
-        robot_vel_final = [self.object_vel_at_time(self.get_time(), obj) for obj in [ROBOT_1, ROBOT_2]]
+        robot_vel_final = [self.object_vel_at_time(self.get_time(), obj) for obj in self.agents]
 
         # calculate positions and velocities of center of mass
         if robot_com_pos_final is None:
@@ -137,7 +158,7 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs(ROBOT_1),
+                self.get_relative_pos_obs(self.agents[0]),
             )
         )
 
@@ -153,10 +174,34 @@ class SimpleSumoEnvClass(EvoGymBase):
                         robots_distance_y,
                     ]
                 ),
-                self.get_relative_pos_obs(ROBOT_2),
+                self.get_relative_pos_obs(self.agents[1]),
             )
         )
 
-        obs = {ROBOT_1: obs1, ROBOT_2: obs2}
+        obs = {self.agents[0]: obs1, self.agents[1]: obs2}
 
         return obs
+
+    @functools.lru_cache(maxsize=None)
+    def observation_space(self, agent):
+
+        num_robot_points = self.object_pos_at_time(self.get_time(), agent).size
+
+        return spaces.Box(
+            low=-100.0,
+            high=100.0,
+            shape=(6 + num_robot_points,),
+            dtype=float,
+        )
+
+    @functools.lru_cache(maxsize=None)
+    def action_space(self, agent):
+
+        num_actuators = self.get_actuator_indices(agent).size
+
+        return spaces.Box(
+            low=0.6,
+            high=1.6,
+            shape=(num_actuators,),
+            dtype=float,
+        )

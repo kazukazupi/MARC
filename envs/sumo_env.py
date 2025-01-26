@@ -9,15 +9,7 @@ from evogym.envs import EvoGymBase
 from gymnasium import spaces
 from pettingzoo import ParallelEnv
 
-ObsType = np.ndarray
-ActionType = np.ndarray
-AgentID = str
-
-ObsDict = Dict[AgentID, ObsType]
-ActionDict = Dict[AgentID, ActionType]
-RewardDict = Dict[AgentID, float]
-BoolDict = Dict[AgentID, bool]
-InfoDict = Dict[AgentID, Dict[str, Any]]
+from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
 class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):

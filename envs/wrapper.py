@@ -1,7 +1,10 @@
 from copy import copy
+from typing import Tuple
 
 import numpy as np
 from pettingzoo import ParallelEnv
+
+from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
 class MultiAgentEnvWrapper:
@@ -11,12 +14,12 @@ class MultiAgentEnvWrapper:
         self.env = env
         self.agents = copy(env.possible_agents)
 
-    def reset(self):
+    def reset(self) -> ObsDict:
         observations, _ = self.env.reset()
         observations = {a: np.expand_dims(observations[a], axis=0) for a in self.agents}
         return observations
 
-    def step(self, actions):
+    def step(self, actions: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, InfoDict]:
 
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
 

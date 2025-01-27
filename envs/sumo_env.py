@@ -1,22 +1,13 @@
-import functools
-import os
 from copy import copy
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from evogym import EvoWorld
-from evogym.envs import EvoGymBase
-from gymnasium import spaces
-from pettingzoo import ParallelEnv
 
+from envs import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
-class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
-
-    metadata = {
-        "name": "Sumo-v0",
-    }
+class SimpleSumoEnvClass(MultiAgentEvoGymBase):
 
     def __init__(
         self,
@@ -28,22 +19,22 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
-        self.possible_agents = ["robot_1", "robot_2"]
-        self.agents: List[str] = []
-        self.timestep: Optional[int] = None
+        self.height_thresh = 1.02 * self.VOXEL_SIZE
+        body_list = [body_1, body_2]
+        connections_list = [connections_1, connections_2]
+        env_file_name = "sumo_env.json"
+        x_positions = [8, 27 - body_2.shape[1]]
+        y_positions = [3, 3]
 
-        self.height_thresh = 1.02
-
-        # make world
-        self.world = EvoWorld.from_json(os.path.join("world_data", "sumo_env.json"))
-        self.world.add_from_array(self.possible_agents[0], body_1, 8, 3, connections=connections_1)
-        self.world.add_from_array(self.possible_agents[1], body_2, 27 - body_2.shape[1], 3, connections=connections_2)
-
-        # init sim
-        EvoGymBase.__init__(self, self.world, render_mode, render_options)
-
-        # set viewer
-        self.default_viewer.track_objects(*self.possible_agents)
+        super().__init__(
+            body_list,
+            connections_list,
+            env_file_name,
+            render_mode,
+            render_options,
+            x_positions,
+            y_positions,
+        )
 
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
@@ -173,27 +164,3 @@ class SimpleSumoEnvClass(EvoGymBase, ParallelEnv):
         obs = {self.agents[0]: obs1, self.agents[1]: obs2}
 
         return obs
-
-    @functools.lru_cache(maxsize=None)
-    def observation_space(self, agent):
-
-        num_robot_points = self.object_pos_at_time(self.get_time(), agent).size
-
-        return spaces.Box(
-            low=-100.0,
-            high=100.0,
-            shape=(6 + num_robot_points,),
-            dtype=float,
-        )
-
-    @functools.lru_cache(maxsize=None)
-    def action_space(self, agent):
-
-        num_actuators = self.get_actuator_indices(agent).size
-
-        return spaces.Box(
-            low=0.6,
-            high=1.6,
-            shape=(num_actuators,),
-            dtype=float,
-        )

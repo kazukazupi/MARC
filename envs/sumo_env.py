@@ -44,7 +44,7 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
 
         # When this is True, the simulation has reached an unstable state from which it cannot recover
-        is_unstable = super().step(action)
+        is_unstable = super(MultiAgentEvoGymBase, self).step(action)
 
         # collect post step information
         robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
@@ -102,7 +102,7 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         self.agents = copy(self.possible_agents)
         self.timestep = 0
 
-        super().reset(seed=seed, options=options)
+        super(MultiAgentEvoGymBase, self).reset(seed=seed, options=options)
         obs = self.calc_obs()
         infos: InfoDict = {a: {} for a in self.agents}
 

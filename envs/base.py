@@ -1,12 +1,14 @@
 import functools
 import os
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from evogym import EvoWorld
 from evogym.envs import EvoGymBase
 from gymnasium import spaces
 from pettingzoo import ParallelEnv
+
+from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
 class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
@@ -40,6 +42,12 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
         self.default_viewer.track_objects(*self.possible_agents)
+
+    def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
+        raise NotImplementedError
+
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
+        raise NotImplementedError
 
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):

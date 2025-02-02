@@ -1,12 +1,10 @@
 from copy import copy
-from typing import Tuple
 
 import numpy as np
-from evogym import sample_robot
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
 from envs import MultiAgentEvoGymBase
-from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, ObsType, RewardDict
+from envs.typehints import ActionDict, ObsDict, ObsType
 
 
 class MultiAgentEnvWrapper:

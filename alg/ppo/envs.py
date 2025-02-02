@@ -1,10 +1,8 @@
 import os
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Optional
 
 import gymnasium as gym  # type: ignore
-import numpy as np
 import torch
-from evogym import get_full_connectivity
 from stable_baselines3.common.monitor import Monitor  # type: ignore
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv, VecEnvWrapper  # type: ignore
 from stable_baselines3.common.vec_env.vec_normalize import VecNormalize  # type: ignore

@@ -9,21 +9,17 @@ def test_maenv_wrapper():
     body_1, connections_1 = sample_robot((5, 5))
     body_2, connections_2 = sample_robot((5, 5))
 
-    raw_env = SimpleSumoEnvClass(
-        body_1=body_1,
-        body_2=body_2,
-        connections_1=connections_1,
-        connections_2=connections_2,
-    )
+    env_funs = [
+        lambda: SimpleSumoEnvClass(
+            body_1=body_1,
+            body_2=body_2,
+            connections_1=connections_1,
+            connections_2=connections_2,
+        )
+    ]
 
-    env = SimpleSumoEnvClass(
-        body_1=body_1,
-        body_2=body_2,
-        connections_1=connections_1,
-        connections_2=connections_2,
-    )
-
-    wrapped_env = MultiAgentDummyVecEnv(env)
+    raw_env = env_funs[0]()
+    wrapped_env = MultiAgentDummyVecEnv(env_funs)
 
     observations, _ = raw_env.reset()
     wrapped_observations = wrapped_env.reset()

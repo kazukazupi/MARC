@@ -1,4 +1,5 @@
 from copy import copy
+from typing import Callable, List
 
 import numpy as np
 from stable_baselines3.common.running_mean_std import RunningMeanStd
@@ -9,10 +10,10 @@ from envs.typehints import ActionDict, ObsDict, ObsType
 
 class MultiAgentDummyVecEnv:
 
-    def __init__(self, env: MultiAgentEvoGymBase):
+    def __init__(self, env_funs: List[Callable[[], MultiAgentEvoGymBase]]):
 
-        self.env = env
-        self.agents = copy(env.possible_agents)
+        self.env = env_funs[0]()
+        self.agents = copy(self.env.possible_agents)
 
     def reset(self) -> ObsDict:
         observations, _ = self.env.reset()

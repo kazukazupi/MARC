@@ -7,7 +7,7 @@ from envs import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, ObsDict, ObsType
 
 
-class MultiAgentEnvWrapper:
+class MultiAgentDummyVecEnv:
 
     def __init__(self, env: MultiAgentEvoGymBase):
 
@@ -49,7 +49,7 @@ class MultiAgentEnvWrapper:
         self.env.close()
 
 
-class MultiAgentNormalize(MultiAgentEnvWrapper):
+class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def __init__(
         self,

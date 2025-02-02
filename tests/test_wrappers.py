@@ -1,7 +1,7 @@
 import numpy as np
 from evogym import sample_robot
 
-from envs import MultiAgentEnvWrapper, SimpleSumoEnvClass
+from envs import MultiAgentDummyVecEnv, SimpleSumoEnvClass
 
 
 def test_maenv_wrapper():
@@ -23,7 +23,7 @@ def test_maenv_wrapper():
         connections_2=connections_2,
     )
 
-    wrapped_env = MultiAgentEnvWrapper(env)
+    wrapped_env = MultiAgentDummyVecEnv(env)
 
     observations, _ = raw_env.reset()
     wrapped_observations = wrapped_env.reset()

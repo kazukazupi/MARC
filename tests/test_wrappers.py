@@ -34,11 +34,16 @@ def test_maenv_wrapper():
         action = {"robot_1": action_1, "robot_2": action_2}
 
         observations, rewards, terminations, truncations, _ = raw_env.step(action)
-        wrapped_observations, wrapped_rewards, wrapped_dones, wrapped_infos = wrapped_env.step(action)
+
+        vec_action = {
+            "robot_1": np.expand_dims(action_1, 0),
+            "robot_2": np.expand_dims(action_2, 0),
+        }
+        wrapped_observations, wrapped_rewards, wrapped_dones, wrapped_infos = wrapped_env.step(vec_action)
 
         if all(terminations.values()) or all(truncations.values()):
             for obs, wrapped_info in zip(observations.values(), wrapped_infos.values()):
-                assert np.array_equal(obs, wrapped_info["terminal_observation"])
+                assert np.array_equal(obs, wrapped_info[0]["terminal_observation"])
             observations, _ = raw_env.reset()
 
         for obs, wrapped_obs in zip(observations.values(), wrapped_observations.values()):
@@ -51,4 +56,4 @@ def test_maenv_wrapper():
             terminations.values(), truncations.values(), wrapped_dones.values(), wrapped_infos.values()
         ):
             assert term or trunc == wrapped_done[0]
-            assert wrapped_info["TimeLimit.truncated"] == (trunc and not term)
+            assert wrapped_info[0]["TimeLimit.truncated"] == (trunc and not term)

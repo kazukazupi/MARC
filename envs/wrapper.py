@@ -1,53 +1,69 @@
-from copy import copy
-from typing import Callable, List
+from copy import copy, deepcopy
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
 from envs import MultiAgentEvoGymBase
-from envs.typehints import ActionDict, ObsDict, ObsType
+from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
+
+VecObsDict = ObsDict
+VecActionDict = ActionDict
+VecRewardDict = Dict[AgentID, np.ndarray]
+VecDoneDict = Dict[AgentID, np.ndarray]
+VecInfoDict = Dict[AgentID, List[Dict[str, Any]]]
 
 
 class MultiAgentDummyVecEnv:
 
     def __init__(self, env_funs: List[Callable[[], MultiAgentEvoGymBase]]):
 
-        self.env = env_funs[0]()
-        self.agents = copy(self.env.possible_agents)
+        self.envs = [env_fun() for env_fun in env_funs]
+        self.num_envs = len(self.envs)
 
-    def reset(self) -> ObsDict:
-        observations, _ = self.env.reset()
-        observations = {a: np.expand_dims(observations[a], axis=0) for a in self.agents}
-        return observations
+        env = self.envs[0]
+        self.agents = copy(env.possible_agents)
+        obs_spaces = {a: env.observation_space(a) for a in self.agents}
 
-    def step(self, actions: ActionDict):
+        self.buf_obs = {
+            a: np.zeros((self.num_envs, *obs_spaces[a].shape), dtype=obs_spaces[a].dtype) for a in self.agents
+        }
+        self.buf_dones = {a: np.zeros((self.num_envs,), dtype=bool) for a in self.agents}
+        self.buf_rews = {a: np.zeros((self.num_envs,), dtype=np.float64) for a in self.agents}
+        self.buf_infos: VecInfoDict = {a: [{} for _ in range(self.num_envs)] for a in self.agents}
 
-        observations, rewards, terminations, truncations, infos = self.env.step(actions)
-
-        assert len(set(terminations.values())) == 1, "Not all terminations have the same value"
-        assert len(set(truncations.values())) == 1, "Not all truncations have the same value"
-
-        dones = {}
-
-        for a in self.agents:
-            dones[a] = terminations[a] or truncations[a]
-            infos[a]["TimeLimit.truncated"] = truncations[a] and not terminations[a]
-
-        assert len(set(dones.values())) == 1, "Not all dones have the same value"
-
-        if all(dones.values()):
+    def reset(self) -> VecObsDict:
+        for env_idx in range(self.num_envs):
+            observations, _ = self.envs[env_idx].reset()
             for a in self.agents:
-                infos[a]["terminal_observation"] = observations[a]
-            observations, _ = self.env.reset()
+                self.buf_obs[a][env_idx] = observations[a]
+        return deepcopy(self.buf_obs)
 
-        observations = {a: np.expand_dims(observations[a], axis=0) for a in self.agents}
-        rewards_ = {a: np.expand_dims(rewards[a], axis=0) for a in self.agents}
-        dones_ = {a: np.expand_dims(dones[a], axis=0) for a in self.agents}
+    def step(self, actions: VecActionDict) -> Tuple[VecObsDict, VecRewardDict, VecDoneDict, VecInfoDict]:
 
-        return observations, rewards_, dones_, infos
+        actions_ = [{a: actions[a][env_idx] for a in self.agents} for env_idx in range(self.num_envs)]
+
+        for env_idx in range(self.num_envs):
+            observations, rewards, terminations, truncations, infos = self.envs[env_idx].step(actions_[env_idx])
+            for a in self.agents:
+                self.buf_rews[a][env_idx] = rewards[a]
+                self.buf_dones[a][env_idx] = terminations[a] or truncations[a]
+                self.buf_infos[a][env_idx] = infos[a]
+                self.buf_infos[a][env_idx]["TimeLimit.truncated"] = truncations[a] and not terminations[a]
+
+            if all([self.buf_dones[a][env_idx] for a in self.agents]):
+                for a in self.agents:
+                    self.buf_infos[a][env_idx]["terminal_observation"] = observations[a]
+                observations, _ = self.envs[env_idx].reset()
+
+            for a in self.agents:
+                self.buf_obs[a][env_idx] = observations[a]
+
+        return deepcopy(self.buf_obs), deepcopy(self.buf_rews), deepcopy(self.buf_dones), deepcopy(self.buf_infos)
 
     def close(self):
-        self.env.close()
+        for env in self.envs:
+            env.close()
 
 
 class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
@@ -98,10 +114,11 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
                     self.ret_rms_dict[a].update(self.returns[a])
                 rewards[a] = self._normalize_reward(rewards[a], self.ret_rms_dict[a])
 
-            if "terminal_observation" in infos[a]:
-                infos[a]["terminal_observation"] = self._normalize_obs(
-                    infos[a]["terminal_observation"], self.obs_rms_dict[a]
-                )
+            for env_idx in range(self.num_envs):
+                if "terminal_observation" in infos[a][env_idx]:
+                    infos[a][env_idx]["terminal_observation"] = self._normalize_obs(
+                        infos[a][env_idx]["terminal_observation"], self.obs_rms_dict[a]
+                    )
 
             self.returns[a][dones[a]] = 0.0
 

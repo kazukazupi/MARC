@@ -65,12 +65,18 @@ class MultiAgentDummyVecEnv:
         for env in self.envs:
             env.close()
 
+    def observation_space(self, agent):
+        return self.envs[0].observation_space(agent)
+
+    def action_space(self, agent):
+        return self.envs[0].action_space(agent)
+
 
 class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def __init__(
         self,
-        env: MultiAgentEvoGymBase,
+        env_funcs: List[Callable[[], MultiAgentEvoGymBase]],
         training: bool = True,
         norm_obs: bool = True,
         norm_reward: bool = True,
@@ -80,28 +86,32 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
         epsilon: float = 1e-8,
     ):
 
-        super().__init__(env)
+        super().__init__(env_funcs)
 
         self.norm_obs = norm_obs
         self.norm_reward = norm_reward
 
         if self.norm_obs:
-            self.obs_rms_dict = {a: RunningMeanStd(shape=env.observation_space(a).shape) for a in self.agents}
+            self.obs_rms_dict = {a: RunningMeanStd(shape=self.envs[0].observation_space(a).shape) for a in self.agents}
 
         self.ret_rms_dict = {a: RunningMeanStd(shape=()) for a in self.agents}
 
         self.clip_obs = clip_obs
         self.clip_reward = clip_reward
-        self.returns = {a: np.zeros(1) for a in self.agents}
+        self.returns = {a: np.zeros(self.num_envs) for a in self.agents}
         self.gamma = gamma
         self.epsilon = epsilon
         self.training = training
 
-    def step(self, actions: ActionDict):
+        self.episode_rewards = {a: np.zeros(self.num_envs) for a in self.agents}
+
+    def step(self, actions: ActionDict) -> Tuple[ObsDict, VecRewardDict, VecDoneDict, VecInfoDict]:
 
         observations, rewards, dones, infos = super().step(actions)
 
         for a in self.agents:
+
+            self.episode_rewards[a] += rewards[a]
 
             if self.norm_obs:
                 if self.training:
@@ -121,6 +131,13 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
                     )
 
             self.returns[a][dones[a]] = 0.0
+
+            for env_idx, done in enumerate(dones[a]):
+                if done:
+                    infos[a][env_idx]["episode"] = {"r": self.episode_rewards[a][env_idx]}
+                    self.episode_rewards[a][env_idx] = 0.0
+
+        return observations, rewards, dones, infos
 
     def reset(self) -> ObsDict:
 

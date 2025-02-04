@@ -2,6 +2,7 @@ from copy import copy, deepcopy
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
+import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
 from envs import MultiAgentEvoGymBase
@@ -12,6 +13,12 @@ VecActionDict = ActionDict
 VecRewardDict = Dict[AgentID, np.ndarray]
 VecDoneDict = Dict[AgentID, np.ndarray]
 VecInfoDict = Dict[AgentID, List[Dict[str, Any]]]
+
+VecPtObsDict = Dict[AgentID, torch.Tensor]
+VecPtActionDict = Dict[AgentID, torch.Tensor]
+VecPtRewardDict = Dict[AgentID, torch.Tensor]
+VecPtDoneDict = Dict[AgentID, torch.Tensor]
+VecPtInfoDict = VecInfoDict
 
 
 class MultiAgentDummyVecEnv:
@@ -156,3 +163,25 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def _normalize_reward(self, reward: np.ndarray, ret_rms: RunningMeanStd) -> np.ndarray:
         return np.clip(reward / np.sqrt(ret_rms.var + self.epsilon), -self.clip_reward, self.clip_reward)
+
+
+class MultiAgentVecPytorch:
+    def __init__(self, env: MultiAgentVecNormalize, device: str = "cpu"):
+        self.env = env
+        self.device = device
+
+    def step(self, actions: ActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
+        observations_, rewards_, dones_, infos = self.env.step(actions)
+
+        observations = {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations_.items()}
+        rewards = {a: torch.tensor(rew, dtype=torch.float32).to(self.device) for a, rew in rewards_.items()}
+        dones = {a: torch.tensor(done, dtype=torch.bool).to(self.device) for a, done in dones_.items()}
+
+        return observations, rewards, dones, infos
+
+    def reset(self) -> VecPtObsDict:
+        observations = self.env.reset()
+        return {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations.items()}
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)

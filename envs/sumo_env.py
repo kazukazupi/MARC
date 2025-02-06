@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from envs import MultiAgentEvoGymBase
+from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 

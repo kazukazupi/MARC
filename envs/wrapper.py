@@ -5,7 +5,8 @@ import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
-from envs import MultiAgentEvoGymBase, SimpleSumoEnvClass
+from envs.base import MultiAgentEvoGymBase
+from envs.sumo_env import SimpleSumoEnvClass
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
 
 VecObsDict = ObsDict

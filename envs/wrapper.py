@@ -1,11 +1,11 @@
 from copy import copy, deepcopy
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
-from envs import MultiAgentEvoGymBase
+from envs import MultiAgentEvoGymBase, SimpleSumoEnvClass
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
 
 VecObsDict = ObsDict
@@ -166,7 +166,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
 
 class MultiAgentVecPytorch:
-    def __init__(self, env: MultiAgentVecNormalize, device: str = "cpu"):
+    def __init__(self, env: MultiAgentVecNormalize, device: torch.device = torch.device("cpu")):
         self.env = env
         self.device = device
 
@@ -185,3 +185,35 @@ class MultiAgentVecPytorch:
 
     def __getattr__(self, name):
         return getattr(self.env, name)
+
+
+def make_vec_envs(
+    env_name: str,
+    num_processes: int,
+    gamma: Optional[float],
+    device: torch.device,
+    training: bool = True,
+    seed: Optional[int] = None,
+    **env_kwargs: Optional[Dict[str, Any]],
+):
+
+    def _thunk():
+        if env_name == "SimpleSumoEnv":
+            env = SimpleSumoEnvClass(**env_kwargs)
+        else:
+            raise ValueError(f"Unknown environment: {env_name}")
+
+        return env
+
+    if num_processes != 1:
+        raise NotImplementedError("Only one process is supported for now.")
+
+    envs = [_thunk for _ in range(num_processes)]
+
+    if training:
+        assert gamma is not None, "gamma must be provided for training"
+        vec_env = MultiAgentVecNormalize(envs, gamma=gamma)
+    else:
+        vec_env = MultiAgentVecNormalize(envs, training=False)
+
+    return MultiAgentVecPytorch(vec_env, device=device)

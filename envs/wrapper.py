@@ -187,6 +187,7 @@ class MultiAgentVecPytorch:
         return getattr(self.env, name)
 
 
+# TODO: 完全な並列環境、シード値設定
 def make_vec_envs(
     env_name: str,
     num_processes: int,
@@ -198,7 +199,7 @@ def make_vec_envs(
 ):
 
     def _thunk():
-        if env_name == "SimpleSumoEnv":
+        if env_name == "Sumo-v0":
             env = SimpleSumoEnvClass(**env_kwargs)
         else:
             raise ValueError(f"Unknown environment: {env_name}")

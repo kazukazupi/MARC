@@ -2,10 +2,11 @@ from collections import deque
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity, sample_robot
+from evogym import get_full_connectivity
 
 from alg.ppo import PPO, Agent, RolloutStorage, update_linear_schedule
 from envs import make_vec_envs
+from evaluate import evaluate
 
 
 def main():
@@ -41,7 +42,16 @@ def main():
         ]
     )
     connections_1 = get_full_connectivity(body_1)
-    body_2, connections_2 = sample_robot((5, 5))
+    body_2 = np.array(
+        [
+            [0, 0, 3, 3, 3],
+            [0, 0, 2, 2, 2],
+            [0, 0, 2, 2, 2],
+            [0, 0, 2, 2, 2],
+            [0, 0, 0, 0, 0],
+        ]
+    )
+    connections_2 = get_full_connectivity(body_2)
 
     vec_env = make_vec_envs(
         env_name,
@@ -133,52 +143,22 @@ def main():
                 )
             )
 
-    obs_rms = vec_env.obs_rms_dict["robot_1"]
-
-    vec_env = make_vec_envs(
+    results = evaluate(
+        [agent, None],
+        vec_env.obs_rms_dict,
         env_name,
         num_processes,
-        None,
         device,
-        training=False,
+        min_num_episodes=1,
+        seed=None,
         body_1=body_1,
         body_2=body_2,
         connections_1=connections_1,
         connections_2=connections_2,
         render_mode="human",
     )
-    vec_env.obs_rms_dict["robot_1"] = obs_rms
 
-    observations = vec_env.reset()
-    obs = observations["robot_1"]
-
-    is_end = False
-
-    while True:
-
-        with torch.no_grad():
-            _, action, _ = agent.act(obs, deterministic=True)
-
-        action_2 = torch.Tensor(np.array([vec_env.action_space("robot_2").sample()]))
-
-        actions = {"robot_1": action, "robot_2": action_2}
-
-        observations, rewards_, dones_, infos_ = vec_env.step(actions)
-        obs = observations["robot_1"]
-        rewards = rewards_["robot_1"]
-        dones = dones_["robot_1"]
-        infos = infos_["robot_1"]
-
-        for info in infos:
-            if "episode" in info:
-                print(info["episode"]["r"])
-                is_end = True
-
-        if is_end:
-            break
-
-        masks = torch.FloatTensor([[0.0] if done else [1.0] for done in dones])
-        bad_masks = torch.FloatTensor([[0.0] if info["TimeLimit.truncated"] else [1.0] for info in infos])
+    print(results)
 
 
 if __name__ == "__main__":

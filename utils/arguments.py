@@ -1,0 +1,42 @@
+import argparse
+
+import torch
+
+
+def get_args() -> argparse.Namespace:
+
+    parser = argparse.ArgumentParser()
+
+    # General arguments
+    parser.add_argument("--env-name", type=str, default="Sumo-v0", help="environment name")
+    parser.add_argument("--save-path", type=str, default="./log", help="directory to save models")
+
+    # PPO Logging
+    parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")
+    parser.add_argument("--eval-interval", type=int, default=10, help="interval between evaluations")
+    parser.add_argument("--num-evals", type=int, default=1, help="number of evaluations")
+
+    # PPO Hyperparameters
+    parser.add_argument("--gamma", type=float, default=0.99, help="discount factor for rewards")
+    parser.add_argument("--num-updates", type=int, default=500, help="number of updates")
+    parser.add_argument("--num-processes", type=int, default=1, help="number of parallel environments")
+    parser.add_argument("--num-steps", type=int, default=128, help="number of forward steps in A2C")
+    parser.add_argument("--gae-lambda", type=float, default=0.95, help="gae lambda parameter")
+    parser.add_argument("--clip-param", type=float, default=0.1, help="ppo clip parameter")
+    parser.add_argument("--ppo-epoch", type=int, default=4, help="number of ppo epochs")
+    parser.add_argument("--num-mini-batch", type=int, default=4, help="number of ppo mini batches")
+    parser.add_argument("--value-loss-coef", type=float, default=0.5, help="value loss coefficient")
+    parser.add_argument("--entropy-coef", type=float, default=0.01, help="entropy term coefficient")
+    parser.add_argument("--lr", type=float, default=2.5e-4, help="learning rate")
+    parser.add_argument("--eps", type=float, default=1e-5, help="RMSprop optimizer epsilon")
+    parser.add_argument("--max-grad-norm", type=float, default=0.5, help="max norm of gradients")
+    parser.add_argument("--use-gae", type=bool, default=True, help="use generalized advantage estimation")
+    parser.add_argument(
+        "--use-proper-time-limits", type=bool, default=False, help="compute returns taking into account time limits"
+    )
+
+    args = parser.parse_args()
+
+    args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    return args

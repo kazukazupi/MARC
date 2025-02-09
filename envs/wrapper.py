@@ -80,6 +80,7 @@ class MultiAgentDummyVecEnv:
         return self.envs[0].action_space(agent)
 
 
+# TODO: テストを行う必要あり（visualize_envとreturnが一致しない）
 class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def __init__(
@@ -102,7 +103,8 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
         if self.norm_obs:
             self.obs_rms_dict = {a: RunningMeanStd(shape=self.envs[0].observation_space(a).shape) for a in self.agents}
 
-        self.ret_rms_dict = {a: RunningMeanStd(shape=()) for a in self.agents}
+        if self.norm_reward:
+            self.ret_rms_dict = {a: RunningMeanStd(shape=()) for a in self.agents}
 
         self.clip_obs = clip_obs
         self.clip_reward = clip_reward
@@ -126,17 +128,17 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
                     self.obs_rms_dict[a].update(observations[a])
                 observations[a] = self._normalize_obs(observations[a], self.obs_rms_dict[a])
 
+                for env_idx in range(self.num_envs):
+                    if "terminal_observation" in infos[a][env_idx]:
+                        infos[a][env_idx]["terminal_observation"] = self._normalize_obs(
+                            infos[a][env_idx]["terminal_observation"], self.obs_rms_dict[a]
+                        )
+
             if self.norm_reward:
                 if self.training:
                     self.returns[a] = self.returns[a] * self.gamma + rewards[a]
                     self.ret_rms_dict[a].update(self.returns[a])
                 rewards[a] = self._normalize_reward(rewards[a], self.ret_rms_dict[a])
-
-            for env_idx in range(self.num_envs):
-                if "terminal_observation" in infos[a][env_idx]:
-                    infos[a][env_idx]["terminal_observation"] = self._normalize_obs(
-                        infos[a][env_idx]["terminal_observation"], self.obs_rms_dict[a]
-                    )
 
             self.returns[a][dones[a]] = 0.0
 
@@ -195,6 +197,8 @@ def make_vec_envs(
     gamma: Optional[float],
     device: torch.device,
     training: bool = True,
+    norm_obs: bool = True,
+    norm_reward: bool = True,
     seed: Optional[int] = None,
     **env_kwargs: Optional[Dict[str, Any]],
 ):
@@ -214,8 +218,11 @@ def make_vec_envs(
 
     if training:
         assert gamma is not None, "gamma must be provided for training"
-        vec_env = MultiAgentVecNormalize(envs, gamma=gamma)
+        vec_env = MultiAgentVecNormalize(envs, gamma=gamma, norm_obs=norm_obs, norm_reward=norm_reward)
     else:
-        vec_env = MultiAgentVecNormalize(envs, training=False)
+        vec_env = MultiAgentVecNormalize(envs, training=False, norm_obs=norm_obs, norm_reward=norm_reward)
+
+    for a in vec_env.agents:
+        vec_env.action_space(a).seed(seed)
 
     return MultiAgentVecPytorch(vec_env, device=device)

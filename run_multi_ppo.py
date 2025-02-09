@@ -1,3 +1,4 @@
+import csv
 import os
 from collections import deque
 
@@ -100,6 +101,12 @@ def main():
 
     max_determ_avg_reward = float("-inf")
 
+    csv_path = os.path.join(save_path, "log.csv")
+
+    with open(csv_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(["updates", "num timesteps", "mean reward", "median reward", "min reward", "max reward"])
+
     for j in range(num_updates):
 
         update_linear_schedule(updater.optimizer, j, num_updates, lr)
@@ -139,6 +146,19 @@ def main():
 
         if j % log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * num_processes * num_steps
+
+            with open(csv_path, "a") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    [
+                        j,
+                        total_num_steps,
+                        np.mean(episode_rewards),
+                        np.median(episode_rewards),
+                        np.min(episode_rewards),
+                        np.max(episode_rewards),
+                    ]
+                )
 
             print(
                 "Updates {}, num timesteps {}\nLast {} training episodes:"

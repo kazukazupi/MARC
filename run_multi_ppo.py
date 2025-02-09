@@ -101,11 +101,16 @@ def main():
 
     max_determ_avg_reward = float("-inf")
 
-    csv_path = os.path.join(save_path, "log.csv")
+    train_csv_path = os.path.join(save_path, "train_log.csv")
+    eval_csv_path = os.path.join(save_path, "eval_log.csv")
 
-    with open(csv_path, "w") as f:
+    with open(train_csv_path, "w") as f:
         writer = csv.writer(f)
         writer.writerow(["updates", "num timesteps", "mean reward", "median reward", "min reward", "max reward"])
+
+    with open(eval_csv_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(["updates", "num timesteps", "rewrard", "max reward"])
 
     for j in range(num_updates):
 
@@ -147,7 +152,7 @@ def main():
         if j % log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * num_processes * num_steps
 
-            with open(csv_path, "a") as f:
+            with open(train_csv_path, "a") as f:
                 writer = csv.writer(f)
                 writer.writerow(
                     [
@@ -205,6 +210,10 @@ def main():
                     ],
                     controller_path,
                 )
+
+            with open(eval_csv_path, "a") as f:
+                writer = csv.writer(f)
+                writer.writerow([j, total_num_steps, determ_avg_reward, max_determ_avg_reward])
 
     results = evaluate(
         [agent, None],

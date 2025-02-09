@@ -23,6 +23,8 @@ def evaluate(
 
     if all([obs_rms is None for obs_rms in obs_rms_dict.values()]):
         norm_obs, norm_reward = False, False
+    else:
+        norm_obs, norm_reward = True, True
 
     envs = make_vec_envs(
         env_name,

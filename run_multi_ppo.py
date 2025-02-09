@@ -1,3 +1,4 @@
+import os
 from collections import deque
 
 import numpy as np
@@ -31,6 +32,13 @@ def main():
     use_proper_time_limits = False
     # seed = 42
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    log_interval = 1
+    eval_interval = 10
+    num_evals = 1
+
+    save_path = "./log"
+    os.mkdir(save_path)
 
     body_1 = np.array(
         [
@@ -90,6 +98,8 @@ def main():
 
     episode_rewards = deque(maxlen=10)
 
+    max_determ_avg_reward = float("-inf")
+
     for j in range(num_updates):
 
         update_linear_schedule(updater.optimizer, j, num_updates, lr)
@@ -127,7 +137,7 @@ def main():
 
         rollouts.after_update()
 
-        if j % 1 == 0 and len(episode_rewards) > 1:
+        if j % log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * num_processes * num_steps
 
             print(
@@ -142,6 +152,39 @@ def main():
                     np.max(episode_rewards),
                 )
             )
+
+        if j % eval_interval == 0 and len(episode_rewards) > 1:
+
+            obs_rms_dict = vec_env.obs_rms_dict
+            results = evaluate(
+                [agent, None],
+                obs_rms_dict,
+                env_name,
+                num_processes,
+                device,
+                min_num_episodes=num_evals,
+                seed=None,
+                body_1=body_1,
+                body_2=body_2,
+                connections_1=connections_1,
+                connections_2=connections_2,
+            )
+
+            determ_avg_reward = results["robot_1"]
+
+            print(f"Evaluated using {num_evals} episodes. Mean reward: {determ_avg_reward}\n")
+
+            if determ_avg_reward > max_determ_avg_reward:
+                max_determ_avg_reward = determ_avg_reward
+                controller_path = os.path.join(save_path, "agent1_controller.pt")
+                print(f"Saving {controller_path} with avg reward {max_determ_avg_reward}\n")
+                torch.save(
+                    [
+                        agent.state_dict(),
+                        obs_rms_dict["robot_1"],
+                    ],
+                    controller_path,
+                )
 
     results = evaluate(
         [agent, None],

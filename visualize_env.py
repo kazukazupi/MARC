@@ -4,11 +4,12 @@ import cv2
 import numpy as np
 from evogym import sample_robot
 
-from envs import SimpleSumoEnvClass
+from envs.sumo_env import SimpleSumoEnvClass
 
 if __name__ == "__main__":
 
-    seed = 16
+    seed = 16  # suicide
+    # seed = 67  # collide
     np.random.seed(seed)
     random.seed(seed)
 

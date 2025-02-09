@@ -1,7 +1,7 @@
 from evogym import sample_robot
 from pettingzoo.test import parallel_api_test
 
-from envs import SimpleSumoEnvClass
+from envs.sumo_env import SimpleSumoEnvClass
 
 
 def test_sumo_v0():

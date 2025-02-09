@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from envs import MultiAgentEvoGymBase
+from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
@@ -19,7 +19,10 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
+        self.collide = False
+        self.collide_thresh = 0.1 * self.VOXEL_SIZE
         self.height_thresh = 1.02 * self.VOXEL_SIZE
+        self.completion_reward = 10.0
         body_list = [body_1, body_2]
         connections_list = [connections_1, connections_2]
         env_file_name = "sumo_env.json"
@@ -64,19 +67,27 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         # judge termination
         terminations = {a: True for a in self.agents}
 
+        # detect collision
+        if not self.collide:
+            distance = np.min(robot_pos_final[1][0]) - np.max(robot_pos_final[0][0])
+            if distance < self.collide_thresh:
+                self.collide = True
+
         if min_heights[0] < self.height_thresh and min_heights[1] < self.height_thresh:
             for a in self.agents:
-                rewards[a] -= 1.0
+                rewards[a] -= self.completion_reward
         elif min_heights[0] < self.height_thresh:
-            rewards[self.agents[0]] -= 1.0
-            rewards[self.agents[1]] += 1.0
+            rewards[self.agents[0]] -= self.completion_reward
+            if self.collide:
+                rewards[self.agents[1]] += self.completion_reward
         elif min_heights[1] < self.height_thresh:
-            rewards[self.agents[0]] += 1.0
-            rewards[self.agents[1]] -= 1.0
+            if self.collide:
+                rewards[self.agents[0]] += self.completion_reward
+            rewards[self.agents[1]] -= self.completion_reward
         elif is_unstable:
             print("SIMULATION UNSTABLE... TERMINATING")
             for a in self.agents:
-                rewards[a] -= 1.0
+                rewards[a] -= self.completion_reward
         else:
             terminations = {a: False for a in self.agents}
 

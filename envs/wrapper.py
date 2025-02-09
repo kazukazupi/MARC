@@ -1,10 +1,12 @@
 from copy import copy, deepcopy
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
-from envs import MultiAgentEvoGymBase
+from envs.base import MultiAgentEvoGymBase
+from envs.sumo_env import SimpleSumoEnvClass
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
 
 VecObsDict = ObsDict
@@ -12,6 +14,12 @@ VecActionDict = ActionDict
 VecRewardDict = Dict[AgentID, np.ndarray]
 VecDoneDict = Dict[AgentID, np.ndarray]
 VecInfoDict = Dict[AgentID, List[Dict[str, Any]]]
+
+VecPtObsDict = Dict[AgentID, torch.Tensor]
+VecPtActionDict = Dict[AgentID, torch.Tensor]
+VecPtRewardDict = Dict[AgentID, torch.Tensor]
+VecPtDoneDict = Dict[AgentID, torch.Tensor]
+VecPtInfoDict = VecInfoDict
 
 
 class MultiAgentDummyVecEnv:
@@ -65,12 +73,19 @@ class MultiAgentDummyVecEnv:
         for env in self.envs:
             env.close()
 
+    def observation_space(self, agent):
+        return self.envs[0].observation_space(agent)
 
+    def action_space(self, agent):
+        return self.envs[0].action_space(agent)
+
+
+# TODO: テストを行う必要あり（visualize_envとreturnが一致しない）
 class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def __init__(
         self,
-        env: MultiAgentEvoGymBase,
+        env_funcs: List[Callable[[], MultiAgentEvoGymBase]],
         training: bool = True,
         norm_obs: bool = True,
         norm_reward: bool = True,
@@ -80,33 +95,44 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
         epsilon: float = 1e-8,
     ):
 
-        super().__init__(env)
+        super().__init__(env_funcs)
 
         self.norm_obs = norm_obs
         self.norm_reward = norm_reward
 
         if self.norm_obs:
-            self.obs_rms_dict = {a: RunningMeanStd(shape=env.observation_space(a).shape) for a in self.agents}
+            self.obs_rms_dict = {a: RunningMeanStd(shape=self.envs[0].observation_space(a).shape) for a in self.agents}
 
-        self.ret_rms_dict = {a: RunningMeanStd(shape=()) for a in self.agents}
+        if self.norm_reward:
+            self.ret_rms_dict = {a: RunningMeanStd(shape=()) for a in self.agents}
 
         self.clip_obs = clip_obs
         self.clip_reward = clip_reward
-        self.returns = {a: np.zeros(1) for a in self.agents}
+        self.returns = {a: np.zeros(self.num_envs) for a in self.agents}
         self.gamma = gamma
         self.epsilon = epsilon
         self.training = training
 
-    def step(self, actions: ActionDict):
+        self.episode_rewards = {a: np.zeros(self.num_envs) for a in self.agents}
+
+    def step(self, actions: ActionDict) -> Tuple[ObsDict, VecRewardDict, VecDoneDict, VecInfoDict]:
 
         observations, rewards, dones, infos = super().step(actions)
 
         for a in self.agents:
 
+            self.episode_rewards[a] += rewards[a]
+
             if self.norm_obs:
                 if self.training:
                     self.obs_rms_dict[a].update(observations[a])
                 observations[a] = self._normalize_obs(observations[a], self.obs_rms_dict[a])
+
+                for env_idx in range(self.num_envs):
+                    if "terminal_observation" in infos[a][env_idx]:
+                        infos[a][env_idx]["terminal_observation"] = self._normalize_obs(
+                            infos[a][env_idx]["terminal_observation"], self.obs_rms_dict[a]
+                        )
 
             if self.norm_reward:
                 if self.training:
@@ -114,13 +140,14 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
                     self.ret_rms_dict[a].update(self.returns[a])
                 rewards[a] = self._normalize_reward(rewards[a], self.ret_rms_dict[a])
 
-            for env_idx in range(self.num_envs):
-                if "terminal_observation" in infos[a][env_idx]:
-                    infos[a][env_idx]["terminal_observation"] = self._normalize_obs(
-                        infos[a][env_idx]["terminal_observation"], self.obs_rms_dict[a]
-                    )
-
             self.returns[a][dones[a]] = 0.0
+
+            for env_idx, done in enumerate(dones[a]):
+                if done:
+                    infos[a][env_idx]["episode"] = {"r": self.episode_rewards[a][env_idx]}
+                    self.episode_rewards[a][env_idx] = 0.0
+
+        return observations, rewards, dones, infos
 
     def reset(self) -> ObsDict:
 
@@ -139,3 +166,63 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
     def _normalize_reward(self, reward: np.ndarray, ret_rms: RunningMeanStd) -> np.ndarray:
         return np.clip(reward / np.sqrt(ret_rms.var + self.epsilon), -self.clip_reward, self.clip_reward)
+
+
+class MultiAgentVecPytorch:
+    def __init__(self, env: MultiAgentVecNormalize, device: torch.device = torch.device("cpu")):
+        self.env = env
+        self.device = device
+
+    def step(self, actions: ActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
+        observations_, rewards_, dones_, infos = self.env.step(actions)
+
+        observations = {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations_.items()}
+        rewards = {a: torch.tensor(rew, dtype=torch.float32).to(self.device) for a, rew in rewards_.items()}
+        dones = {a: torch.tensor(done, dtype=torch.bool).to(self.device) for a, done in dones_.items()}
+
+        return observations, rewards, dones, infos
+
+    def reset(self) -> VecPtObsDict:
+        observations = self.env.reset()
+        return {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations.items()}
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+
+# TODO: 完全な並列環境、シード値設定
+def make_vec_envs(
+    env_name: str,
+    num_processes: int,
+    gamma: Optional[float],
+    device: torch.device,
+    training: bool = True,
+    norm_obs: bool = True,
+    norm_reward: bool = True,
+    seed: Optional[int] = None,
+    **env_kwargs: Optional[Dict[str, Any]],
+):
+
+    def _thunk():
+        if env_name == "Sumo-v0":
+            env = SimpleSumoEnvClass(**env_kwargs)
+        else:
+            raise ValueError(f"Unknown environment: {env_name}")
+
+        return env
+
+    if num_processes != 1:
+        raise NotImplementedError("Only one process is supported for now.")
+
+    envs = [_thunk for _ in range(num_processes)]
+
+    if training:
+        assert gamma is not None, "gamma must be provided for training"
+        vec_env = MultiAgentVecNormalize(envs, gamma=gamma, norm_obs=norm_obs, norm_reward=norm_reward)
+    else:
+        vec_env = MultiAgentVecNormalize(envs, training=False, norm_obs=norm_obs, norm_reward=norm_reward)
+
+    for a in vec_env.agents:
+        vec_env.action_space(a).seed(seed)
+
+    return MultiAgentVecPytorch(vec_env, device=device)

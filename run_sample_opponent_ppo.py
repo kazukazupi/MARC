@@ -53,6 +53,7 @@ def main():
     eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
     opponents_last_obs = {}
+    controller_paths = {}
 
     agnet_ids = ["robot_1", "robot_2"]
 
@@ -121,6 +122,7 @@ def main():
 
         train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
         eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
+        controller_paths[a] = OrderedDict()
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
@@ -169,6 +171,18 @@ def main():
             )
             updaters[a].update(rollouts[a])
             rollouts[a].after_update()
+
+            if j % args.save_interval == 0:
+                controller_path = os.path.join(log_dirs[a], f"controller_{j}.pt")
+                controller_paths[a][j] = controller_path
+                torch.save(
+                    [
+                        agents[a].state_dict(),
+                        vec_envs[a].obs_rms_dict[a],
+                        j,
+                    ],
+                    controller_path,
+                )
 
 
 if __name__ == "__main__":

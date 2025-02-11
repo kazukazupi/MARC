@@ -14,6 +14,7 @@ def get_args() -> argparse.Namespace:
     # PPO Logging
     parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")
     parser.add_argument("--eval-interval", type=int, default=10, help="interval between evaluations")
+    parser.add_argument("--save-interval", type=int, default=10, help="interval between saving models")
     parser.add_argument("--num-evals", type=int, default=1, help="number of evaluations")
 
     # PPO Hyperparameters

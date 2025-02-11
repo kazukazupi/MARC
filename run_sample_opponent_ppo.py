@@ -131,11 +131,9 @@ def main():
 
         max_determ_avg_rewards[a] = float("-inf")
 
-    actions = {"agent_1": None, "agent_2": None}
+    actions = {"robot_1": None, "robot_2": None}
 
     for j in range(args.num_updates):
-
-        print(j)
 
         for a, o in zip(agnet_ids, reversed(agnet_ids)):
 
@@ -161,14 +159,14 @@ def main():
 
                 rollouts[a].insert(observations[a], actions[a], action_log_prob, value, rewards[a], masks, bad_masks)
 
-                with torch.no_grad():
-                    next_value = agents[a].get_value(rollouts[a].obs[-1]).detach()
+            with torch.no_grad():
+                next_value = agents[a].get_value(rollouts[a].obs[-1]).detach()
 
-                rollouts[a].compute_returns(
-                    next_value, args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits
-                )
-                updaters[a].update(rollouts[a])
-                rollouts[a].after_update()
+            rollouts[a].compute_returns(
+                next_value, args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits
+            )
+            updaters[a].update(rollouts[a])
+            rollouts[a].after_update()
 
 
 if __name__ == "__main__":

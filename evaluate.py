@@ -101,12 +101,8 @@ if __name__ == "__main__":
     logs = {"robot_1": "log4", "robot_2": "log4"}
 
     for a in agent_names:
-        param, obs_rms = torch.load(os.path.join(logs[a], a, "controller.pt"))
-        obs_dim = param["base.actor.0.weight"].shape[1]
-        action_dim = param["dist.fc_mean.bias"].shape[0]
-        agent = Agent(obs_dim=obs_dim, hidden_dim=64, action_dim=action_dim)
-        agent.load_state_dict(param)
-        agents[a] = agent
+        state_dict, obs_rms = torch.load(os.path.join(logs[a], a, "controller.pt"))
+        agents[a] = Agent.from_state_dict(state_dict)
         obs_rms_dict[a] = obs_rms
 
     seed = 16

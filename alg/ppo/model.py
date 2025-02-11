@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Tuple
 
 import numpy as np
@@ -13,6 +14,15 @@ class Agent(nn.Module):
         super(Agent, self).__init__()
         self.base = ActorCritic(obs_dim, hidden_dim)
         self.dist = DiagGaussian(hidden_dim, action_dim)
+
+    @classmethod
+    def from_state_dict(cls, state_dict: OrderedDict[str, Tensor]) -> "Agent":
+        obs_dim = state_dict["base.actor.0.weight"].shape[1]
+        hidden_dim = state_dict["base.actor.0.weight"].shape[0]
+        action_dim = state_dict["dist.fc_mean.bias"].shape[0]
+        agent = cls(obs_dim=obs_dim, hidden_dim=hidden_dim, action_dim=action_dim)
+        agent.load_state_dict(state_dict)
+        return agent
 
     def forward(self, inputs: Tensor):
         raise NotImplementedError

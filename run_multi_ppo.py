@@ -166,7 +166,7 @@ def main():
 
             obs_rms_dict = vec_env.obs_rms_dict
             determ_avg_rewards = evaluate(
-                list(agents.values()),
+                agents,
                 obs_rms_dict,
                 args.env_name,
                 args.num_processes,
@@ -196,7 +196,7 @@ def main():
                     writer.writerow([j, total_num_steps, determ_avg_rewards[a]])
 
     results = evaluate(
-        list(agents.values()),
+        agents,
         vec_env.obs_rms_dict,
         args.env_name,
         args.num_processes,

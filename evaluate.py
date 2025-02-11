@@ -8,12 +8,12 @@ from evogym import get_full_connectivity, sample_robot
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
 from alg.ppo import Agent
-from envs import make_vec_envs
+from envs import AgentID, make_vec_envs
 
 
 def evaluate(
-    agents: List[Optional[Agent]],
-    obs_rms_dict: Dict[str, Optional[RunningMeanStd]],
+    agents: Dict[AgentID, Optional[Agent]],
+    obs_rms_dict: Dict[AgentID, Optional[RunningMeanStd]],
     env_name: str,
     num_processes: int,
     device: torch.device,
@@ -42,9 +42,9 @@ def evaluate(
     assert len(agents) == len(envs.agents), "The number of agents must be equal to the number of environments."
     assert len(obs_rms_dict) == len(envs.agents), "The number of obs_rms must be equal to the number of environments."
 
-    for a in envs.agents:
-        if obs_rms_dict[a] is not None:
-            envs.obs_rms_dict[a] = obs_rms_dict[a]
+    for a, obs_rms in obs_rms_dict.items():
+        if obs_rms is not None:
+            envs.obs_rms_dict[a] = obs_rms
 
     episode_rewards: Dict[str, List[float]] = {a: [] for a in envs.agents}
 
@@ -54,7 +54,7 @@ def evaluate(
 
         # set actions
         actions = {}
-        for a, agent in zip(envs.agents, agents):
+        for a, agent in agents.items():
             if agent is not None:
                 with torch.no_grad():
                     _, action, _ = agent.act(observations[a], deterministic=True)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     env_name = "Sumo-v0"
 
     agent_names = ["robot_1", "robot_2"]
-    agents: List[Optional[Agent]] = []
+    agents: Dict[AgentID, Optional[Agent]] = {}
     obs_rms_dict = {}
     logs = {"robot_1": "log4", "robot_2": "log4"}
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         action_dim = param["dist.fc_mean.bias"].shape[0]
         agent = Agent(obs_dim=obs_dim, hidden_dim=64, action_dim=action_dim)
         agent.load_state_dict(param)
-        agents.append(agent)
+        agents[a] = agent
         obs_rms_dict[a] = obs_rms
 
     seed = 16

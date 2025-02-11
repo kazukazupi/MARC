@@ -173,8 +173,9 @@ class MultiAgentVecPytorch:
         self.env = env
         self.device = device
 
-    def step(self, actions: ActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
-        observations_, rewards_, dones_, infos = self.env.step(actions)
+    def step(self, actions: VecPtActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
+        actions_ = {a: action.cpu().numpy() for a, action in actions.items()}
+        observations_, rewards_, dones_, infos = self.env.step(actions_)
 
         observations = {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations_.items()}
         rewards = {a: torch.tensor(rew, dtype=torch.float32).to(self.device) for a, rew in rewards_.items()}

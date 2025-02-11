@@ -1,5 +1,6 @@
 import csv
 import os
+import random
 from collections import OrderedDict
 from typing import Dict
 
@@ -9,7 +10,6 @@ from evogym import get_full_connectivity
 
 from alg.ppo import PPO, Agent, RolloutStorage, update_linear_schedule
 from envs import AgentID, make_vec_envs
-from evaluate import evaluate
 from utils import get_args
 
 
@@ -156,6 +156,11 @@ def main():
                             total_num_steps = args.num_processes * (j * args.num_steps + step + 1)
                             writer = csv.writer(f)
                             writer.writerow([j, total_num_steps, info["episode"]["r"]])
+                        if controller_paths[o]:
+                            random_key = random.choice(list(controller_paths[o].keys()))
+                            state_dict, obs_rms = torch.load(controller_paths[o][random_key])
+                            opponents[o].load_state_dict(state_dict)
+                            vec_envs[a].obs_rms_dict[o] = obs_rms
 
                 masks = torch.FloatTensor([[0.0] if done else [1.0] for done in dones[a]])
                 bad_masks = torch.FloatTensor([[0.0] if info["TimeLimit.truncated"] else [1.0] for info in infos[a]])
@@ -179,7 +184,6 @@ def main():
                     [
                         agents[a].state_dict(),
                         vec_envs[a].obs_rms_dict[a],
-                        j,
                     ],
                     controller_path,
                 )

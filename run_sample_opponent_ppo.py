@@ -60,12 +60,12 @@ def main():
     for a, o in zip(agnet_ids, reversed(agnet_ids)):
 
         # Initialize environment
-        # TODO: trainingのTrue/Falseをエージェントごとに個別設定
         vec_envs[a] = make_vec_envs(
             args.env_name,
             args.num_processes,
             args.gamma,
             args.device,
+            training={a: True, o: False},
             body_1=body_1,
             body_2=body_2,
             connections_1=connections_1,

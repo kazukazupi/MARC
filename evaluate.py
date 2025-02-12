@@ -98,10 +98,10 @@ if __name__ == "__main__":
     agent_names = ["robot_1", "robot_2"]
     agents: Dict[AgentID, Optional[Agent]] = {}
     obs_rms_dict = {}
-    logs = {"robot_1": "log4", "robot_2": "log4"}
+    logs = {"robot_1": "log10", "robot_2": "log10"}
 
     for a in agent_names:
-        state_dict, obs_rms = torch.load(os.path.join(logs[a], a, "controller.pt"))
+        state_dict, obs_rms = torch.load(os.path.join(logs[a], a, "controller_490.pt"))
         agents[a] = Agent.from_state_dict(state_dict)
         obs_rms_dict[a] = obs_rms
 

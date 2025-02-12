@@ -1,5 +1,5 @@
 from copy import copy, deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -86,7 +86,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
     def __init__(
         self,
         env_funcs: List[Callable[[], MultiAgentEvoGymBase]],
-        training: bool = True,
+        training: Union[bool, Dict[AgentID, bool]] = True,
         norm_obs: bool = True,
         norm_reward: bool = True,
         clip_obs: float = 10.0,
@@ -111,7 +111,11 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
         self.returns = {a: np.zeros(self.num_envs) for a in self.agents}
         self.gamma = gamma
         self.epsilon = epsilon
-        self.training = training
+
+        if isinstance(training, bool):
+            self.training_dict = {a: training for a in self.agents}
+        else:
+            self.training_dict = training
 
         self.episode_rewards = {a: np.zeros(self.num_envs) for a in self.agents}
 
@@ -124,7 +128,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
             self.episode_rewards[a] += rewards[a]
 
             if self.norm_obs:
-                if self.training:
+                if self.training_dict[a]:
                     self.obs_rms_dict[a].update(observations[a])
                 observations[a] = self._normalize_obs(observations[a], self.obs_rms_dict[a])
 
@@ -135,7 +139,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
                         )
 
             if self.norm_reward:
-                if self.training:
+                if self.training_dict[a]:
                     self.returns[a] = self.returns[a] * self.gamma + rewards[a]
                     self.ret_rms_dict[a].update(self.returns[a])
                 rewards[a] = self._normalize_reward(rewards[a], self.ret_rms_dict[a])
@@ -155,7 +159,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
 
         for a in self.agents:
             if self.norm_obs:
-                if self.training:
+                if self.training_dict[a]:
                     self.obs_rms_dict[a].update(observations[a])
                 observations[a] = self._normalize_obs(observations[a], self.obs_rms_dict[a])
 
@@ -173,8 +177,9 @@ class MultiAgentVecPytorch:
         self.env = env
         self.device = device
 
-    def step(self, actions: ActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
-        observations_, rewards_, dones_, infos = self.env.step(actions)
+    def step(self, actions: VecPtActionDict) -> Tuple[VecPtObsDict, VecPtRewardDict, VecPtDoneDict, VecPtInfoDict]:
+        actions_ = {a: action.cpu().numpy() for a, action in actions.items()}
+        observations_, rewards_, dones_, infos = self.env.step(actions_)
 
         observations = {a: torch.tensor(obs, dtype=torch.float32).to(self.device) for a, obs in observations_.items()}
         rewards = {a: torch.tensor(rew, dtype=torch.float32).to(self.device) for a, rew in rewards_.items()}
@@ -196,7 +201,7 @@ def make_vec_envs(
     num_processes: int,
     gamma: Optional[float],
     device: torch.device,
-    training: bool = True,
+    training: Union[bool, Dict[AgentID, bool]] = True,
     norm_obs: bool = True,
     norm_reward: bool = True,
     seed: Optional[int] = None,
@@ -216,11 +221,11 @@ def make_vec_envs(
 
     envs = [_thunk for _ in range(num_processes)]
 
-    if training:
+    if (isinstance(training, bool) and training) or (isinstance(training, dict) and any(training.values())):
         assert gamma is not None, "gamma must be provided for training"
-        vec_env = MultiAgentVecNormalize(envs, gamma=gamma, norm_obs=norm_obs, norm_reward=norm_reward)
+        vec_env = MultiAgentVecNormalize(envs, training, norm_obs, norm_reward, gamma=gamma)
     else:
-        vec_env = MultiAgentVecNormalize(envs, training=False, norm_obs=norm_obs, norm_reward=norm_reward)
+        vec_env = MultiAgentVecNormalize(envs, training, norm_obs, norm_reward)
 
     for a in vec_env.agents:
         vec_env.action_space(a).seed(seed)

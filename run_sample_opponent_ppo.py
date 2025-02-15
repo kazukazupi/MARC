@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import random
 from collections import OrderedDict
@@ -56,6 +57,16 @@ def main():
     controller_paths = {}
 
     agnet_ids = ["robot_1", "robot_2"]
+
+    with open(os.path.join(args.save_path, "env_info.json"), "w") as f:
+        json.dump(
+            {
+                "env_name": args.env_name,
+                "agents": agnet_ids,
+            },
+            f,
+            indent=2,
+        )
 
     for a, o in zip(agnet_ids, reversed(agnet_ids)):
 
@@ -119,6 +130,13 @@ def main():
         # Create log files
         log_dirs[a] = os.path.join(args.save_path, a)
         os.mkdir(log_dirs[a])
+
+        if a == "robot_1":
+            np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
+            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
+        else:
+            np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
+            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
 
         train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
         eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")

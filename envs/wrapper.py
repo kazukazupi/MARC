@@ -6,6 +6,7 @@ import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd
 
 from envs.base import MultiAgentEvoGymBase
+from envs.chase_env import HorizontalChaseEnvClass
 from envs.sumo_env import SimpleSumoEnvClass
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
 
@@ -211,6 +212,8 @@ def make_vec_envs(
     def _thunk():
         if env_name == "Sumo-v0":
             env = SimpleSumoEnvClass(**env_kwargs)
+        elif env_name == "HorizontalChaser-v0":
+            env = HorizontalChaseEnvClass(**env_kwargs)
         else:
             raise ValueError(f"Unknown environment: {env_name}")
 

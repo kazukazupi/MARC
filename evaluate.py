@@ -104,7 +104,7 @@ if __name__ == "__main__":
         controller_paths = sorted(glob.glob(os.path.join(args.save_path, a, "controller_*.pt")))
         latest_controller_path = max(controller_paths, key=os.path.getctime)
         print(f"Loading {latest_controller_path}")
-        state_dict, obs_rms = torch.load(latest_controller_path)
+        state_dict, obs_rms = torch.load(latest_controller_path, map_location="cpu")
         agents[a] = Agent.from_state_dict(state_dict)
         obs_rms_dict[a] = obs_rms
 

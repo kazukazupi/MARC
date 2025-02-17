@@ -1,3 +1,6 @@
+import argparse
+import glob
+import json
 import os
 import random
 from typing import Any, Dict, List, Optional
@@ -79,29 +82,29 @@ def evaluate(
 
 if __name__ == "__main__":
 
-    body_1 = np.array(
-        [
-            [0, 0, 0, 2, 3],
-            [2, 0, 4, 4, 4],
-            [1, 3, 2, 0, 1],
-            [1, 1, 1, 3, 4],
-            [0, 3, 0, 2, 0],
-        ]
-    )
-    connections_1 = get_full_connectivity(body_1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save-path", type=str, required=True)
+    args = parser.parse_args()
 
-    body_2 = np.fliplr(body_1)
-    connections_2 = get_full_connectivity(body_2)
+    with open(os.path.join(args.save_path, "env_info.json"), "r") as f:
+        env_info = json.load(f)
 
-    env_name = "Sumo-v0"
+    env_name = env_info["env_name"]
 
-    agent_names = ["robot_1", "robot_2"]
+    body_1 = np.load(os.path.join(args.save_path, env_info["agents"][0], "body.npy"))
+    connections_1 = np.load(os.path.join(args.save_path, env_info["agents"][0], "connections.npy"))
+
+    body_2 = np.load(os.path.join(args.save_path, env_info["agents"][1], "body.npy"))
+    connections_2 = np.load(os.path.join(args.save_path, env_info["agents"][1], "connections.npy"))
+
     agents: Dict[AgentID, Optional[Agent]] = {}
     obs_rms_dict = {}
-    logs = {"robot_1": "log10", "robot_2": "log10"}
 
-    for a in agent_names:
-        state_dict, obs_rms = torch.load(os.path.join(logs[a], a, "controller_490.pt"))
+    for a in env_info["agents"]:
+        controller_paths = sorted(glob.glob(os.path.join(args.save_path, a, "controller_*.pt")))
+        latest_controller_path = max(controller_paths, key=os.path.getctime)
+        print(f"Loading {latest_controller_path}")
+        state_dict, obs_rms = torch.load(latest_controller_path, map_location="cpu")
         agents[a] = Agent.from_state_dict(state_dict)
         obs_rms_dict[a] = obs_rms
 

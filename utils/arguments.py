@@ -18,6 +18,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--num-evals", type=int, default=1, help="number of evaluations")
 
     # PPO Hyperparameters
+    parser.add_argument("--delta", type=float, default=0.0, help="delta for self-play opponent sampling")
     parser.add_argument("--gamma", type=float, default=0.99, help="discount factor for rewards")
     parser.add_argument("--num-updates", type=int, default=500, help="number of updates")
     parser.add_argument("--num-processes", type=int, default=1, help="number of parallel environments")

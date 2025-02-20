@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
-from alg.ppo.envs import make_vec_envs
 from alg.ppo.model import Agent
+from alg.ppo.single_agent_envs import make_vec_envs
 
 
 def evaluate(

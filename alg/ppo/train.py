@@ -3,8 +3,7 @@ import csv
 import json
 import os
 import random
-from collections import OrderedDict
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
@@ -48,7 +47,7 @@ def train(
     eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
     opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
-    controller_paths: Dict[AgentID, OrderedDict[int, str]] = {}
+    controller_paths: Dict[AgentID, List[str]] = {}
 
     agnet_ids = ["robot_1", "robot_2"]
 
@@ -136,7 +135,7 @@ def train(
 
         train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
         eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
-        controller_paths[a] = OrderedDict()
+        controller_paths[a] = []
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
@@ -169,8 +168,7 @@ def train(
                             writer = csv.writer(f)
                             writer.writerow([j, total_num_steps, info["episode"]["r"]])
                         if controller_paths[o]:
-                            random_key = random.choice(list(controller_paths[o].keys()))
-                            state_dict, obs_rms = torch.load(controller_paths[o][random_key])
+                            state_dict, obs_rms = torch.load(random.choice(controller_paths[o]))
                             opponents[o].load_state_dict(state_dict)
                             vec_envs[a].obs_rms_dict[o] = obs_rms
 
@@ -191,7 +189,7 @@ def train(
 
             if j % args.save_interval == 0:
                 controller_path = os.path.join(log_dirs[a], f"controller_{j}.pt")
-                controller_paths[a][j] = controller_path
+                controller_paths[a].append(controller_path)
                 torch.save(
                     [
                         agents[a].state_dict(),

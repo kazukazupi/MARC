@@ -9,11 +9,16 @@ from typing import Dict, Optional
 import numpy as np
 import torch
 
-from alg.ppo import PPO, Agent, RolloutStorage, make_vec_envs, update_linear_schedule
+from alg.ppo.model import Agent
+from alg.ppo.multi_agent_envs import make_vec_envs
+from alg.ppo.ppo import PPO
+from alg.ppo.storage import RolloutStorage
+from alg.ppo.utils import update_linear_schedule
 from envs import AgentID
 
 
 def train(
+    save_path: str,
     args: argparse.Namespace,
     body_1: np.ndarray,
     body_2: np.ndarray,
@@ -21,7 +26,7 @@ def train(
     connections_2: Optional[np.ndarray] = None,
 ):
 
-    os.mkdir(args.save_path)
+    os.makedirs(save_path)
 
     vec_env = make_vec_envs(
         args.env_name,
@@ -47,7 +52,7 @@ def train(
 
     agnet_ids = ["robot_1", "robot_2"]
 
-    with open(os.path.join(args.save_path, "env_info.json"), "w") as f:
+    with open(os.path.join(save_path, "env_info.json"), "w") as f:
         json.dump(
             {
                 "env_name": args.env_name,
@@ -117,7 +122,7 @@ def train(
         opponents_last_obs[o] = observations[o]
 
         # Create log files
-        log_dirs[a] = os.path.join(args.save_path, a)
+        log_dirs[a] = os.path.join(save_path, a)
         os.mkdir(log_dirs[a])
 
         if a == "robot_1":

@@ -1,37 +1,27 @@
+import argparse
 import csv
 import json
 import os
 import random
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity  # type: ignore
 
 from alg.ppo import PPO, Agent, RolloutStorage, make_vec_envs, update_linear_schedule
 from envs import AgentID
-from utils import get_args
 
 
-def main():
+def train(
+    args: argparse.Namespace,
+    body_1: np.ndarray,
+    body_2: np.ndarray,
+    connections_1: Optional[np.ndarray] = None,
+    connections_2: Optional[np.ndarray] = None,
+):
 
-    args = get_args()
     os.mkdir(args.save_path)
-
-    body_1 = np.array(
-        [
-            [0, 0, 1, 0, 0],
-            [4, 4, 3, 3, 4],
-            [3, 0, 0, 2, 4],
-            [2, 3, 0, 3, 2],
-            [1, 3, 3, 1, 3],
-        ]
-    )
-    connections_1 = get_full_connectivity(body_1)
-
-    body_2 = np.fliplr(body_1)
-    connections_2 = get_full_connectivity(body_2)
 
     vec_env = make_vec_envs(
         args.env_name,
@@ -132,10 +122,12 @@ def main():
 
         if a == "robot_1":
             np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
-            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
+            if connections_1 is not None:
+                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
         else:
             np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
-            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
+            if connections_2 is not None:
+                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
 
         train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
         eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
@@ -202,7 +194,3 @@ def main():
                     ],
                     controller_path,
                 )
-
-
-if __name__ == "__main__":
-    main()

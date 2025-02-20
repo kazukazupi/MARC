@@ -168,7 +168,13 @@ def train(
                             writer = csv.writer(f)
                             writer.writerow([j, total_num_steps, info["episode"]["r"]])
                         if controller_paths[o]:
-                            state_dict, obs_rms = torch.load(random.choice(controller_paths[o]))
+                            delta_index = int(args.delta * len(controller_paths[o]))
+                            recent_controllers = controller_paths[o][delta_index:]
+                            if recent_controllers:
+                                controller_path = random.choice(recent_controllers)
+                            else:
+                                controller_path = controller_paths[o][-1]
+                            state_dict, obs_rms = torch.load(controller_path)
                             opponents[o].load_state_dict(state_dict)
                             vec_envs[a].obs_rms_dict[o] = obs_rms
 

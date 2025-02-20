@@ -22,7 +22,7 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         self.collide = False
         self.collide_thresh = 0.1 * self.VOXEL_SIZE
         self.height_thresh = 1.02 * self.VOXEL_SIZE
-        self.completion_reward = 10.0
+        self.completion_reward = 1.0
         body_list = [body_1, body_2]
         connections_list = [connections_1, connections_2]
         env_file_name = "sumo_env.json"

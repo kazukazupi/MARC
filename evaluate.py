@@ -7,11 +7,11 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity, sample_robot
-from stable_baselines3.common.running_mean_std import RunningMeanStd
+from evogym import get_full_connectivity, sample_robot  # type: ignore
+from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
-from alg.ppo import Agent
-from envs import AgentID, make_vec_envs
+from alg.ppo import Agent, make_vec_envs
+from envs import AgentID
 
 
 def evaluate(
@@ -22,7 +22,7 @@ def evaluate(
     device: torch.device,
     min_num_episodes: int = 1,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ) -> Dict[str, float]:
 
     if all([obs_rms is None for obs_rms in obs_rms_dict.values()]):

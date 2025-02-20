@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from stable_baselines3.common.running_mean_std import RunningMeanStd
+from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
 from envs.base import MultiAgentEvoGymBase
 from envs.chase_env import HorizontalChaseEnvClass
@@ -206,7 +206,7 @@ def make_vec_envs(
     norm_obs: bool = True,
     norm_reward: bool = True,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ):
 
     def _thunk():

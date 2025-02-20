@@ -2,7 +2,7 @@ import argparse
 import os
 
 import matplotlib.pyplot as plt
-import pandas as pd
+import pandas as pd  # type: ignore
 
 if __name__ == "__main__":
 

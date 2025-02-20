@@ -1,37 +1,31 @@
+import argparse
 import csv
 import json
 import os
 import random
-from collections import OrderedDict
-from typing import Dict
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity
 
-from alg.ppo import PPO, Agent, RolloutStorage, update_linear_schedule
-from envs import AgentID, make_vec_envs
-from utils import get_args
+from alg.ppo.model import Agent
+from alg.ppo.multi_agent_envs import make_vec_envs
+from alg.ppo.ppo import PPO
+from alg.ppo.storage import RolloutStorage
+from alg.ppo.utils import update_linear_schedule
+from envs import AgentID
 
 
-def main():
+def train(
+    save_path: str,
+    args: argparse.Namespace,
+    body_1: np.ndarray,
+    body_2: np.ndarray,
+    connections_1: Optional[np.ndarray] = None,
+    connections_2: Optional[np.ndarray] = None,
+):
 
-    args = get_args()
-    os.mkdir(args.save_path)
-
-    body_1 = np.array(
-        [
-            [0, 0, 1, 0, 0],
-            [4, 4, 3, 3, 4],
-            [3, 0, 0, 2, 4],
-            [2, 3, 0, 3, 2],
-            [1, 3, 3, 1, 3],
-        ]
-    )
-    connections_1 = get_full_connectivity(body_1)
-
-    body_2 = np.fliplr(body_1)
-    connections_2 = get_full_connectivity(body_2)
+    os.makedirs(save_path)
 
     vec_env = make_vec_envs(
         args.env_name,
@@ -48,17 +42,16 @@ def main():
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
     rollouts: Dict[AgentID, RolloutStorage] = {}
-    max_determ_avg_rewards: Dict[AgentID, np.ndarray] = {}
     log_dirs: Dict[AgentID, str] = {}
     train_csv_paths: Dict[AgentID, str] = {}
     eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
-    opponents_last_obs = {}
-    controller_paths = {}
+    opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
+    controller_paths: Dict[AgentID, List[str]] = {}
 
     agnet_ids = ["robot_1", "robot_2"]
 
-    with open(os.path.join(args.save_path, "env_info.json"), "w") as f:
+    with open(os.path.join(save_path, "env_info.json"), "w") as f:
         json.dump(
             {
                 "env_name": args.env_name,
@@ -128,19 +121,21 @@ def main():
         opponents_last_obs[o] = observations[o]
 
         # Create log files
-        log_dirs[a] = os.path.join(args.save_path, a)
+        log_dirs[a] = os.path.join(save_path, a)
         os.mkdir(log_dirs[a])
 
         if a == "robot_1":
             np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
-            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
+            if connections_1 is not None:
+                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
         else:
             np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
-            np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
+            if connections_2 is not None:
+                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
 
         train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
         eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
-        controller_paths[a] = OrderedDict()
+        controller_paths[a] = []
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
@@ -150,9 +145,7 @@ def main():
             writer = csv.writer(f)
             writer.writerow(["updates", "num timesteps", "eval rewrard"])
 
-        max_determ_avg_rewards[a] = float("-inf")
-
-    actions = {"robot_1": None, "robot_2": None}
+    actions = {}
 
     for j in range(args.num_updates):
 
@@ -175,8 +168,7 @@ def main():
                             writer = csv.writer(f)
                             writer.writerow([j, total_num_steps, info["episode"]["r"]])
                         if controller_paths[o]:
-                            random_key = random.choice(list(controller_paths[o].keys()))
-                            state_dict, obs_rms = torch.load(controller_paths[o][random_key])
+                            state_dict, obs_rms = torch.load(random.choice(controller_paths[o]))
                             opponents[o].load_state_dict(state_dict)
                             vec_envs[a].obs_rms_dict[o] = obs_rms
 
@@ -197,7 +189,7 @@ def main():
 
             if j % args.save_interval == 0:
                 controller_path = os.path.join(log_dirs[a], f"controller_{j}.pt")
-                controller_paths[a][j] = controller_path
+                controller_paths[a].append(controller_path)
                 torch.save(
                     [
                         agents[a].state_dict(),
@@ -205,7 +197,3 @@ def main():
                     ],
                     controller_path,
                 )
-
-
-if __name__ == "__main__":
-    main()

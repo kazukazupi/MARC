@@ -60,7 +60,7 @@ def make_vec_envs(
     device: torch.device,
     training: bool = True,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ):
     """
     観測および報酬の正規化、環境への入出力のPyTorchテンソルへの変換の機能を備えた並列環境を作成する関数

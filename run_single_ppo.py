@@ -2,9 +2,9 @@ from collections import deque
 
 import numpy as np
 import torch
-from evogym import envs, get_full_connectivity  # noqa
+from evogym import envs, get_full_connectivity  # type: ignore # noqa: F401
 
-from alg.ppo import PPO, Agent, RolloutStorage, evaluate, make_vec_envs, update_linear_schedule
+from alg.ppo import PPO, Agent, RolloutStorage, evaluate, make_vec_saenvs, update_linear_schedule
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     connections = get_full_connectivity(body)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    env = make_vec_envs(
+    env = make_vec_saenvs(
         env_name=env_name,
         num_processes=num_processes,
         gamma=gamma,
@@ -74,7 +74,7 @@ def main():
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
-    episode_rewards = deque(maxlen=10)
+    episode_rewards: deque[float] = deque(maxlen=10)
 
     # num_updates = num_env_steps // num_steps // num_processes
 
@@ -117,10 +117,10 @@ def main():
                     j,
                     total_num_steps,
                     len(episode_rewards),
-                    np.mean(episode_rewards),
-                    np.median(episode_rewards),
-                    np.min(episode_rewards),
-                    np.max(episode_rewards),
+                    float(np.mean(episode_rewards)),
+                    float(np.median(episode_rewards)),
+                    float(np.min(episode_rewards)),
+                    float(np.max(episode_rewards)),
                 )
             )
 

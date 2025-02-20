@@ -9,7 +9,7 @@ def get_args() -> argparse.Namespace:
 
     # General arguments
     parser.add_argument("--env-name", type=str, default="Sumo-v0", help="environment name")
-    parser.add_argument("--save-path", type=str, default="./log", help="directory to save models")
+    parser.add_argument("--exp-dirname", type=str, default="log", help="directory name to save models")
 
     # PPO Logging
     parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")

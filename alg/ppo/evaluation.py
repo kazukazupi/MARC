@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
-from alg.ppo.envs import make_vec_envs
 from alg.ppo.model import Agent
+from alg.ppo.single_agent_envs import make_vec_envs
 
 
 def evaluate(
@@ -16,7 +16,7 @@ def evaluate(
     device: torch.device,
     min_num_episodes: int = 1,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ) -> float:
     """
     モデルの性能を評価する

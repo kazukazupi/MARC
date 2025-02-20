@@ -6,7 +6,7 @@ authors = ["kazukazupi <22kazuaki22@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = "3.10.13"
 evogym = "2.0.0"
 torch = "1.12.0"
 gymnasium = "0.28.1"
@@ -14,6 +14,7 @@ pettingzoo = "^1.24.3"
 opencv-python = "^4.11.0.86"
 pytest = "^8.3.4"
 numpy = "1.23"
+pyproject-flake8 = "^7.0.0"
 
 [tool.black]
 line-length = 119
@@ -21,6 +22,16 @@ line-length = 119
 [tool.isort]
 profile = "black"
 line_length = 119
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+disallow_subclassing_any = false
+warn_unreachable = true
+
+[tool.flake8]
+max-line-length = 119
+exclude = ".venv"
 
 [build-system]
 requires = ["poetry-core"]

@@ -22,7 +22,7 @@ def evaluate(
     device: torch.device,
     min_num_episodes: int = 1,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ) -> Dict[str, float]:
 
     if all([obs_rms is None for obs_rms in obs_rms_dict.values()]):

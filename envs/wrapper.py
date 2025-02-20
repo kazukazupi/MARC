@@ -206,7 +206,7 @@ def make_vec_envs(
     norm_obs: bool = True,
     norm_reward: bool = True,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ):
 
     def _thunk():

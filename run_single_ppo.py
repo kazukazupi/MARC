@@ -74,7 +74,7 @@ def main():
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
-    episode_rewards = deque(maxlen=10)
+    episode_rewards: deque[float] = deque(maxlen=10)
 
     # num_updates = num_env_steps // num_steps // num_processes
 
@@ -117,10 +117,10 @@ def main():
                     j,
                     total_num_steps,
                     len(episode_rewards),
-                    np.mean(episode_rewards),
-                    np.median(episode_rewards),
-                    np.min(episode_rewards),
-                    np.max(episode_rewards),
+                    float(np.mean(episode_rewards)),
+                    float(np.median(episode_rewards)),
+                    float(np.min(episode_rewards)),
+                    float(np.max(episode_rewards)),
                 )
             )
 

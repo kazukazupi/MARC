@@ -1,6 +1,6 @@
 import csv
 import os
-from typing import Dict
+from typing import Dict, Optional, cast
 
 import numpy as np
 import torch
@@ -46,7 +46,7 @@ def main():
     agents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
     rollouts: Dict[AgentID, RolloutStorage] = {}
-    max_determ_avg_rewards: Dict[AgentID, np.ndarray] = {}
+    max_determ_avg_rewards: Dict[AgentID, float] = {}
     log_dirs: Dict[AgentID, str] = {}
     train_csv_paths: Dict[AgentID, str] = {}
     eval_csv_paths: Dict[AgentID, str] = {}
@@ -166,7 +166,7 @@ def main():
 
             obs_rms_dict = vec_env.obs_rms_dict
             determ_avg_rewards = evaluate(
-                agents,
+                cast(Dict[str, Optional[Agent]], agents),
                 obs_rms_dict,
                 args.env_name,
                 args.num_processes,
@@ -196,7 +196,7 @@ def main():
                     writer.writerow([j, total_num_steps, determ_avg_rewards[a]])
 
     results = evaluate(
-        agents,
+        cast(Dict[str, Optional[Agent]], agents),
         vec_env.obs_rms_dict,
         args.env_name,
         args.num_processes,

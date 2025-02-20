@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import torch
@@ -16,7 +16,7 @@ def evaluate(
     device: torch.device,
     min_num_episodes: int = 1,
     seed: Optional[int] = None,
-    **env_kwargs: Optional[Dict[str, Any]],
+    **env_kwargs: Any,
 ) -> float:
     """
     モデルの性能を評価する

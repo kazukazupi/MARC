@@ -48,13 +48,12 @@ def main():
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
     rollouts: Dict[AgentID, RolloutStorage] = {}
-    max_determ_avg_rewards: Dict[AgentID, np.ndarray] = {}
     log_dirs: Dict[AgentID, str] = {}
     train_csv_paths: Dict[AgentID, str] = {}
     eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
-    opponents_last_obs = {}
-    controller_paths = {}
+    opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
+    controller_paths: Dict[AgentID, OrderedDict[int, str]] = {}
 
     agnet_ids = ["robot_1", "robot_2"]
 
@@ -150,9 +149,7 @@ def main():
             writer = csv.writer(f)
             writer.writerow(["updates", "num timesteps", "eval rewrard"])
 
-        max_determ_avg_rewards[a] = float("-inf")
-
-    actions = {"robot_1": None, "robot_2": None}
+    actions = {}
 
     for j in range(args.num_updates):
 

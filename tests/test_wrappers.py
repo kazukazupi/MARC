@@ -1,5 +1,5 @@
 import numpy as np
-from evogym import sample_robot
+from evogym import sample_robot  # type: ignore
 
 from envs.sumo_env import SimpleSumoEnvClass
 from envs.wrapper import MultiAgentDummyVecEnv

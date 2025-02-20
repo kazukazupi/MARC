@@ -1,1 +1,1 @@
-from utils.arguments import get_args  # noqa
+from utils.arguments import get_args  # noqa: F401

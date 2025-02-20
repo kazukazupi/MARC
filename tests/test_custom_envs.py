@@ -1,5 +1,5 @@
-from evogym import sample_robot
-from pettingzoo.test import parallel_api_test
+from evogym import sample_robot  # type: ignore
+from pettingzoo.test import parallel_api_test  # type: ignore
 
 from envs.sumo_env import SimpleSumoEnvClass
 

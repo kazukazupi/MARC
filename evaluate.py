@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity, sample_robot
-from stable_baselines3.common.running_mean_std import RunningMeanStd
+from evogym import get_full_connectivity, sample_robot  # type: ignore
+from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
 from alg.ppo import Agent
 from envs import AgentID, make_vec_envs

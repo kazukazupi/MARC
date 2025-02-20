@@ -4,7 +4,7 @@ from typing import Dict, Optional, cast
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity
+from evogym import get_full_connectivity  # type: ignore
 
 from alg.ppo import PPO, Agent, RolloutStorage, update_linear_schedule
 from envs import AgentID, make_vec_envs

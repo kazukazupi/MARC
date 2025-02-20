@@ -2,7 +2,7 @@ from collections import deque
 
 import numpy as np
 import torch
-from evogym import envs, get_full_connectivity  # noqa
+from evogym import envs, get_full_connectivity  # type: ignore # noqa: F401
 
 from alg.ppo import PPO, Agent, RolloutStorage, evaluate, make_vec_envs, update_linear_schedule
 

@@ -3,10 +3,10 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from evogym import EvoWorld
-from evogym.envs import EvoGymBase
-from gymnasium import spaces
-from pettingzoo import ParallelEnv
+from evogym import EvoWorld  # type: ignore
+from evogym.envs import EvoGymBase  # type: ignore
+from gymnasium import spaces  # type: ignore
+from pettingzoo import ParallelEnv  # type: ignore
 
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 

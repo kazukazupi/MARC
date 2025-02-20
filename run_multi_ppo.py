@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from evogym import get_full_connectivity  # type: ignore
 
-from alg.ppo import PPO, Agent, RolloutStorage, update_linear_schedule
-from envs import AgentID, make_vec_envs
+from alg.ppo import PPO, Agent, RolloutStorage, make_vec_envs, update_linear_schedule
+from envs import AgentID
 from evaluate import evaluate
 from utils import get_args
 

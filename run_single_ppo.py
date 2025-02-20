@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from evogym import envs, get_full_connectivity  # type: ignore # noqa: F401
 
-from alg.ppo import PPO, Agent, RolloutStorage, evaluate, make_vec_envs, update_linear_schedule
+from alg.ppo import PPO, Agent, RolloutStorage, evaluate, make_vec_saenvs, update_linear_schedule
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
     connections = get_full_connectivity(body)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    env = make_vec_envs(
+    env = make_vec_saenvs(
         env_name=env_name,
         num_processes=num_processes,
         gamma=gamma,

@@ -10,8 +10,8 @@ import torch
 from evogym import get_full_connectivity, sample_robot  # type: ignore
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
-from alg.ppo import Agent
-from envs import AgentID, make_vec_envs
+from alg.ppo import Agent, make_vec_envs
+from envs import AgentID
 
 
 def evaluate(

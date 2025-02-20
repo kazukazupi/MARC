@@ -1,8 +1,8 @@
 import numpy as np
 from evogym import sample_robot  # type: ignore
 
+from alg.ppo.multi_agent_envs import MultiAgentDummyVecEnv
 from envs.sumo_env import SimpleSumoEnvClass
-from envs.wrapper import MultiAgentDummyVecEnv
 
 
 def test_maenv_wrapper():

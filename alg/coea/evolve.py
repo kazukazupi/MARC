@@ -4,6 +4,7 @@ import random
 
 from alg.coea.population import Population
 from alg.ppo import train
+from utils import get_agent_names
 
 
 def evolve(args: argparse.Namespace):
@@ -11,7 +12,7 @@ def evolve(args: argparse.Namespace):
     save_path = os.path.join("experiments", "coea", args.env_name, args.exp_dirname)
     os.makedirs(save_path)
 
-    robot_ids = ["robot_1", "robot_2"]
+    robot_ids = get_agent_names()
 
     populations = {id_: Population(os.path.join(save_path, id_), args) for id_ in robot_ids}
 

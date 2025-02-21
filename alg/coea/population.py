@@ -1,4 +1,5 @@
 import argparse
+import os
 from typing import Dict, List
 
 from evogym import hashable, sample_robot  # type: ignore
@@ -8,13 +9,15 @@ from alg.coea.structure import Structure
 
 class Population:
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, save_path: str, args: argparse.Namespace):
+
+        os.makedirs(save_path)
 
         self.structures: List[Structure] = []
         self.population_structure_hashes: Dict[str, bool] = {}
 
         # generate a population
-        for i in range(args.pop_size):
+        for _ in range(args.pop_size):
 
             body, connections = sample_robot(args.robot_shape)
             while hashable(body) in self.population_structure_hashes:

@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from alg.ppo.distributions import DiagGaussian, FixedNormal
-from alg.ppo.utils import init
+from alg.ppo.ppo_utils import init
 
 
 class Agent(nn.Module):

@@ -20,17 +20,6 @@ def train(
     structures: Dict[AgentID, Structure],
 ):
 
-    vec_env = make_vec_envs(
-        args.env_name,
-        args.num_processes,
-        args.gamma,
-        args.device,
-        body_1=structures["robot_1"].body,
-        body_2=structures["robot_2"].body,
-        connections_1=structures["robot_1"].connections,
-        connections_2=structures["robot_2"].connections,
-    )
-
     agents: Dict[AgentID, Agent] = {}
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
@@ -58,8 +47,8 @@ def train(
         )
 
         # Create agent
-        obs_dim = vec_env.observation_space(a).shape[0]
-        action_dim = vec_env.action_space(a).shape[0]
+        obs_dim = vec_envs[a].observation_space(a).shape[0]
+        action_dim = vec_envs[a].action_space(a).shape[0]
         agents[a] = Agent(
             obs_dim=obs_dim,
             hidden_dim=64,

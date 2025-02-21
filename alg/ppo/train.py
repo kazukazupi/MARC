@@ -41,10 +41,10 @@ def train(
             args.gamma,
             args.device,
             training={a: True, o: False},
-            body_1=structures["robot_1"].body,
-            body_2=structures["robot_2"].body,
-            connections_1=structures["robot_1"].connections,
-            connections_2=structures["robot_2"].connections,
+            body_1=structures[agent_names[0]].body,
+            body_2=structures[agent_names[1]].body,
+            connections_1=structures[agent_names[0]].connections,
+            connections_2=structures[agent_names[1]].connections,
         )
 
         # Create agent

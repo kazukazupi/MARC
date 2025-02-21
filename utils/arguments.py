@@ -11,6 +11,10 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--env-name", type=str, default="Sumo-v0", help="environment name")
     parser.add_argument("--exp-dirname", type=str, default="log", help="directory name to save models")
 
+    # Coevolution Hyperparameters
+    parser.add_argument("--pop-size", type=int, default=10, help="population size")
+    parser.add_argument("--robot-shape", type=tuple, default=(5, 5), help="shape of the robot")
+
     # PPO Logging
     parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")
     parser.add_argument("--eval-interval", type=int, default=10, help="interval between evaluations")

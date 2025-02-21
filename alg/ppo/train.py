@@ -1,6 +1,5 @@
 import argparse
 import csv
-import json
 import os
 import random
 from typing import Dict, List, Optional
@@ -17,15 +16,14 @@ from envs import AgentID
 
 
 def train(
-    save_path: str,
     args: argparse.Namespace,
+    save_path_1: str,
+    save_path_2: str,
     body_1: np.ndarray,
     body_2: np.ndarray,
     connections_1: Optional[np.ndarray] = None,
     connections_2: Optional[np.ndarray] = None,
 ):
-
-    os.makedirs(save_path)
 
     vec_env = make_vec_envs(
         args.env_name,
@@ -50,16 +48,6 @@ def train(
     controller_paths: Dict[AgentID, List[str]] = {}
 
     agnet_ids = ["robot_1", "robot_2"]
-
-    with open(os.path.join(save_path, "env_info.json"), "w") as f:
-        json.dump(
-            {
-                "env_name": args.env_name,
-                "agents": agnet_ids,
-            },
-            f,
-            indent=2,
-        )
 
     for a, o in zip(agnet_ids, reversed(agnet_ids)):
 
@@ -121,14 +109,15 @@ def train(
         opponents_last_obs[o] = observations[o]
 
         # Create log files
-        log_dirs[a] = os.path.join(save_path, a)
-        os.mkdir(log_dirs[a])
-
         if a == "robot_1":
+            log_dirs[a] = save_path_1
+            os.mkdir(log_dirs[a])
             np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
             if connections_1 is not None:
                 np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
         else:
+            log_dirs[a] = save_path_2
+            os.mkdir(log_dirs[a])
             np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
             if connections_2 is not None:
                 np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)

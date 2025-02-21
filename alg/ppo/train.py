@@ -2,11 +2,11 @@ import argparse
 import csv
 import os
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import numpy as np
 import torch
 
+from alg.coea.structure import Structure
 from alg.ppo.model import Agent
 from alg.ppo.multi_agent_envs import make_vec_envs
 from alg.ppo.ppo import PPO
@@ -17,12 +17,7 @@ from envs import AgentID
 
 def train(
     args: argparse.Namespace,
-    save_path_1: str,
-    save_path_2: str,
-    body_1: np.ndarray,
-    body_2: np.ndarray,
-    connections_1: Optional[np.ndarray] = None,
-    connections_2: Optional[np.ndarray] = None,
+    structures: Dict[AgentID, Structure],
 ):
 
     vec_env = make_vec_envs(
@@ -30,19 +25,17 @@ def train(
         args.num_processes,
         args.gamma,
         args.device,
-        body_1=body_1,
-        body_2=body_2,
-        connections_1=connections_1,
-        connections_2=connections_2,
+        body_1=structures["robot_1"].body,
+        body_2=structures["robot_2"].body,
+        connections_1=structures["robot_1"].connections,
+        connections_2=structures["robot_2"].connections,
     )
 
     agents: Dict[AgentID, Agent] = {}
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
     rollouts: Dict[AgentID, RolloutStorage] = {}
-    log_dirs: Dict[AgentID, str] = {}
     train_csv_paths: Dict[AgentID, str] = {}
-    eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
     opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
     controller_paths: Dict[AgentID, List[str]] = {}
@@ -58,10 +51,10 @@ def train(
             args.gamma,
             args.device,
             training={a: True, o: False},
-            body_1=body_1,
-            body_2=body_2,
-            connections_1=connections_1,
-            connections_2=connections_2,
+            body_1=structures["robot_1"].body,
+            body_2=structures["robot_2"].body,
+            connections_1=structures["robot_1"].connections,
+            connections_2=structures["robot_2"].connections,
         )
 
         # Create agent
@@ -108,31 +101,12 @@ def train(
         rollouts[a].to(args.device)
         opponents_last_obs[o] = observations[o]
 
-        # Create log files
-        if a == "robot_1":
-            log_dirs[a] = save_path_1
-            os.mkdir(log_dirs[a])
-            np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
-            if connections_1 is not None:
-                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
-        else:
-            log_dirs[a] = save_path_2
-            os.mkdir(log_dirs[a])
-            np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
-            if connections_2 is not None:
-                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
-
-        train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
-        eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
+        train_csv_paths[a] = os.path.join(structures[a].save_path, "train_log.csv")
         controller_paths[a] = []
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
             writer.writerow(["updates", "num timesteps", "train reward"])
-
-        with open(eval_csv_paths[a], "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["updates", "num timesteps", "eval rewrard"])
 
     actions = {}
 
@@ -183,7 +157,7 @@ def train(
             rollouts[a].after_update()
 
             if j % args.save_interval == 0:
-                controller_path = os.path.join(log_dirs[a], f"controller_{j}.pt")
+                controller_path = os.path.join(structures[a].save_path, f"controller_{j}.pt")
                 controller_paths[a].append(controller_path)
                 torch.save(
                     [

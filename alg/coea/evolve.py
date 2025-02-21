@@ -12,9 +12,9 @@ def evolve(args: argparse.Namespace):
     save_path = os.path.join("experiments", "coea", args.env_name, args.exp_dirname)
     os.makedirs(save_path)
 
-    robot_ids = get_agent_names()
+    agent_names = get_agent_names()
 
-    populations = {id_: Population(os.path.join(save_path, id_), args) for id_ in robot_ids}
+    populations = {name: Population(os.path.join(save_path, name), args) for name in agent_names}
 
     while True:
 

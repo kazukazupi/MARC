@@ -13,6 +13,7 @@ from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
 from alg.ppo.storage import RolloutStorage
 from envs import AgentID
+from utils import get_agent_names
 
 
 def train(
@@ -29,9 +30,9 @@ def train(
     opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
     controller_paths: Dict[AgentID, List[str]] = {}
 
-    agnet_ids = ["robot_1", "robot_2"]
+    agent_names = get_agent_names()
 
-    for a, o in zip(agnet_ids, reversed(agnet_ids)):
+    for a, o in zip(agent_names, reversed(agent_names)):
 
         # Initialize environment
         vec_envs[a] = make_vec_envs(
@@ -101,7 +102,7 @@ def train(
 
     for j in range(args.num_updates):
 
-        for a, o in zip(agnet_ids, reversed(agnet_ids)):
+        for a, o in zip(agent_names, reversed(agent_names)):
 
             update_linear_schedule(updaters[a].optimizer, j, args.num_updates, args.lr)
 

@@ -30,3 +30,6 @@ class Population:
 
             self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
             self.population_structure_hashes[hashable(body)] = True
+
+    def __getitem__(self, index: int) -> Structure:
+        return self.structures[index]

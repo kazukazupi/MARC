@@ -41,7 +41,6 @@ def evolve(args: argparse.Namespace):
             obs_rms_dict = {}
             for agent_name, id_ in match.items():
                 latest_controller_path = populations[agent_name][id_].get_latest_controller_path()
-                assert latest_controller_path is not None, f"Controller for {agent_name} is not found."
                 state_dict, obs_rms = torch.load(latest_controller_path, map_location=args.device)
                 agents[agent_name] = Agent.from_state_dict(state_dict)
                 obs_rms_dict[agent_name] = obs_rms

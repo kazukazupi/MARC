@@ -1,6 +1,5 @@
 import glob
 import os
-from typing import Optional
 
 import numpy as np
 
@@ -17,10 +16,7 @@ class Structure:
         np.save(os.path.join(self.save_path, "body.npy"), body)
         np.save(os.path.join(self.save_path, "connections.npy"), connections)
 
-    def get_latest_controller_path(self) -> Optional[str]:
-
+    def get_latest_controller_path(self) -> str:
         controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
-        if not controller_paths:
-            return None
-        else:
-            return max(controller_paths, key=os.path.getctime)
+        assert controller_paths, f"Controller for {self.save_path} is not found."
+        return max(controller_paths, key=os.path.getctime)

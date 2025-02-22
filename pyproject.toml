@@ -28,6 +28,7 @@ line_length = 119
 check_untyped_defs = true
 disallow_subclassing_any = false
 warn_unreachable = true
+exclude = "legacy/.*"
 
 [tool.flake8]
 max-line-length = 119

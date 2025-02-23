@@ -1,4 +1,5 @@
 import argparse
+import csv
 import logging
 import os
 import random
@@ -17,6 +18,11 @@ class Population:
         self.agent_name = agent_name
         self.save_path = save_path
         os.mkdir(self.save_path)
+        
+        self.csv_path = os.path.join(self.save_path, "fitnesses.csv")
+        with open(self.csv_path, "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["generation"] + [f"id{i:02}" for i in range(args.pop_size)])
 
         self.structures: List[Structure] = []
         self.population_structure_hashes: Dict[str, bool] = {}
@@ -84,6 +90,11 @@ class Population:
     def fitnesses(self, fitnesses: np.ndarray) -> None:
         if len(fitnesses) != len(self.structures):
             raise ValueError("Length of fitnesses does not match the number of structures.")
+
+        with open(self.csv_path, "a") as f:
+            writer = csv.writer(f)
+            writer.writerow([self.generation] + list(fitnesses))
+
         for structure, fitness in zip(self.structures, fitnesses):
             structure.fitness = fitness
 

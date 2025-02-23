@@ -35,7 +35,7 @@ class Population:
             self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
             self.population_structure_hashes[hashable(body)] = True
 
-    def update(self, num_survivors: int):
+    def update(self, num_survivors: int, num_reproductions: int):
         logging.info(f"Updating {self.agent_name} population")
 
         # selection
@@ -43,13 +43,15 @@ class Population:
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
         logging.info(f"Survivors: {','.join(map(str, survivors))}")
+        for id_ in non_survivors:
+            self.structures[id_].is_died = True
 
         # reproduce
         self.generation += 1
         generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
         os.mkdir(generation_path)
 
-        for id_ in non_survivors:
+        for id_ in non_survivors[:num_reproductions]:
             child_save_path = os.path.join(generation_path, f"id{id_:02}")
             num_attempts = 100
             for _ in range(num_attempts):
@@ -69,7 +71,9 @@ class Population:
         return indices
 
     def get_evaluation_indices(self) -> List[int]:
-        indices = [idx for idx, structure in enumerate(self.structures) if structure.is_trained]
+        indices = [
+            idx for idx, structure in enumerate(self.structures) if structure.is_trained and not structure.is_died
+        ]
         return indices
 
     @property

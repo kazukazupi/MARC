@@ -7,6 +7,7 @@ def get_matches(
 ) -> List[Dict[str, int]]:
 
     assert len(listA) == len(listB), "Lists must be of equal length"
+    num_opponents = min(num_opponents, len(listB))
 
     shuffled_listB = listB.copy()
     random.shuffle(shuffled_listB)

@@ -43,6 +43,9 @@ def evolve(args: argparse.Namespace):
         )
 
         for match in matches:
+            if num_trainings >= args.max_trainings:
+                break
+
             logging.info(
                 f"Training {match[agent_names[0]]} vs {match[agent_names[1]]} ({num_trainings+1}/{args.max_trainings})"
             )
@@ -79,10 +82,17 @@ def evolve(args: argparse.Namespace):
         for name in agent_names:
             populations[name].fitnesses = fitnesses[name]
 
+        if num_trainings >= args.max_trainings:
+            break
+
         # selection, reproduction
         percent_survival = get_percent_survival_evals(num_trainings, args.max_trainings)
         num_survivors = max(2, math.ceil(args.pop_size * percent_survival))
+        num_reproductions = min(args.pop_size - num_survivors, args.max_trainings - num_trainings)
         logging.info(f"Percent survival: {percent_survival}")
         logging.info(f"Num survivors: {num_survivors}")
+        logging.info(f"Num reproductions: {num_reproductions}")
         for name in agent_names:
-            populations[name].update(num_survivors)
+            populations[name].update(num_survivors, num_reproductions)
+
+    logging.info("Experiment finished")

@@ -15,6 +15,7 @@ class Structure:
         self.connections = connections
         self.fitness = -np.inf
         self.is_trained = False
+        self.is_died = False
 
         if save:
             os.mkdir(self.save_path)

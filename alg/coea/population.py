@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import random
 from typing import Dict, List
@@ -11,8 +12,9 @@ from alg.coea.structure import Structure, mutate
 
 class Population:
 
-    def __init__(self, save_path: str, args: argparse.Namespace):
+    def __init__(self, agent_name: str, save_path: str, args: argparse.Namespace):
 
+        self.agent_name = agent_name
         self.save_path = save_path
         os.mkdir(self.save_path)
 
@@ -33,12 +35,14 @@ class Population:
             self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
             self.population_structure_hashes[hashable(body)] = True
 
-    def update(self, num_survivors: int) -> None:
+    def update(self, num_survivors: int):
+        logging.info(f"Updating {self.agent_name} population")
 
         # selection
         sorted_args = np.argsort(-self.fitnesses)
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
+        logging.info(f"Survivors: {','.join(map(str, survivors))}")
 
         # reproduce
         self.generation += 1
@@ -56,6 +60,7 @@ class Population:
             else:
                 raise RuntimeError("Failed to generate a child.")
 
+            logging.info(f"Reproduced {parent_id} -> {id_}")
             self.structures[id_] = child
             self.population_structure_hashes[hashable(child.body)] = True
 

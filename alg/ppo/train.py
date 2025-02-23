@@ -21,6 +21,8 @@ def train(
     structures: Dict[AgentID, Structure],
 ):
 
+    assert any([not s.is_trained for s in structures.values()]), "already trained."
+
     agents: Dict[AgentID, Agent] = {}
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
@@ -156,3 +158,6 @@ def train(
                     ],
                     controller_path,
                 )
+
+    for a in agent_names:
+        structures[a].is_trained = True

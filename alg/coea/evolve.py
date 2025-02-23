@@ -1,6 +1,7 @@
 import argparse
 import os
-import random
+
+import numpy as np
 
 from alg.coea.matching import get_matches
 from alg.coea.population import Population
@@ -20,10 +21,6 @@ def evolve(args: argparse.Namespace):
 
     while True:
 
-        # pair robots
-        indices = list(range(args.pop_size))
-        random.shuffle(indices)
-
         # train
         matches = get_matches(args.pop_size, 1, agent_names)
         for match in matches:
@@ -32,6 +29,8 @@ def evolve(args: argparse.Namespace):
             train(args, structures)
 
         # evaluate
+        fitnesses = {name: np.zeros(args.pop_size) for name in agent_names}
+
         matches = get_matches(args.pop_size, args.eval_num_opponents, agent_names)
         for match in matches:
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
@@ -45,4 +44,14 @@ def evolve(args: argparse.Namespace):
             )
             print(match, results)
 
+            for name, id in match.items():
+                fitnesses[name][id] += results[name]
+
+        fitnesses = {name: fitnesses[name] / args.eval_num_opponents for name in agent_names}
+        for name in agent_names:
+            populations[name].fitnesses = fitnesses[name]
+
         break
+        # selection
+
+        # reproduce

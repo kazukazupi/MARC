@@ -2,6 +2,7 @@ import argparse
 import os
 from typing import Dict, List
 
+import numpy as np
 from evogym import hashable, sample_robot  # type: ignore
 
 from alg.coea.structure import Structure
@@ -30,6 +31,15 @@ class Population:
 
             self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
             self.population_structure_hashes[hashable(body)] = True
+
+    @property
+    def fitnesses(self) -> np.ndarray:
+        return np.array([structure.fitness for structure in self.structures])
+
+    @fitnesses.setter
+    def fitnesses(self, fitnesses: np.ndarray) -> None:
+        for structure, fitness in zip(self.structures, fitnesses):
+            structure.fitness = fitness
 
     def __getitem__(self, index: int) -> Structure:
         return self.structures[index]

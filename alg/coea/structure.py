@@ -11,6 +11,7 @@ class Structure:
         self.save_path = save_path
         self.body = body
         self.connections = connections
+        self.fitness = -np.inf
 
         if save:
             os.mkdir(self.save_path)

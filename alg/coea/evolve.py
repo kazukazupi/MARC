@@ -24,7 +24,13 @@ def evolve(args: argparse.Namespace):
     while True:
 
         # train
-        matches = get_matches(args.pop_size, 1, agent_names)
+        matches = get_matches(
+            populations[agent_names[0]].get_training_indices(),
+            populations[agent_names[1]].get_training_indices(),
+            1,
+            agent_names,
+        )
+        
         for match in matches:
             print(match)
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
@@ -34,7 +40,13 @@ def evolve(args: argparse.Namespace):
         # evaluate
         fitnesses = {name: np.zeros(args.pop_size) for name in agent_names}
 
-        matches = get_matches(args.pop_size, args.eval_num_opponents, agent_names)
+        matches = get_matches(
+            populations[agent_names[0]].get_evaluation_indices(),
+            populations[agent_names[1]].get_evaluation_indices(),
+            args.eval_num_opponents,
+            agent_names,
+        )
+
         for match in matches:
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
             results = evaluate(

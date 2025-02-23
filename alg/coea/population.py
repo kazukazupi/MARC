@@ -59,6 +59,14 @@ class Population:
             self.structures[id_] = child
             self.population_structure_hashes[hashable(child.body)] = True
 
+    def get_training_indices(self) -> List[int]:
+        indices = [idx for idx, structure in enumerate(self.structures) if not structure.is_trained]
+        return indices
+
+    def get_evaluation_indices(self) -> List[int]:
+        indices = [idx for idx, structure in enumerate(self.structures) if structure.is_trained]
+        return indices
+
     @property
     def fitnesses(self) -> np.ndarray:
         return np.array([structure.fitness for structure in self.structures])

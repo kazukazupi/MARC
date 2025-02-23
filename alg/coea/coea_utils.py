@@ -18,6 +18,12 @@ def get_matches(pop_size: int, num_opponents: int, agent_names: List[str]) -> Li
     return matching
 
 
+def get_percent_survival_evals(curr_train: int, max_trains: int) -> float:
+    low = 0.0
+    high = 0.6
+    return ((max_trains - curr_train - 1) / (max_trains - 1)) * (high - low) + low
+
+
 if __name__ == "__main__":
     pop_size = 3
     num_opponents = 2

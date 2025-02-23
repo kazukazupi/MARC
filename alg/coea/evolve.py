@@ -1,9 +1,10 @@
 import argparse
+import math
 import os
 
 import numpy as np
 
-from alg.coea.matching import get_matches
+from alg.coea.coea_utils import get_matches, get_percent_survival_evals
 from alg.coea.population import Population
 from alg.ppo import train
 from evaluate import evaluate
@@ -18,6 +19,7 @@ def evolve(args: argparse.Namespace):
     agent_names = get_agent_names()
 
     populations = {name: Population(os.path.join(save_path, name), args) for name in agent_names}
+    num_trainings = 0
 
     while True:
 
@@ -27,6 +29,7 @@ def evolve(args: argparse.Namespace):
             print(match)
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
             train(args, structures)
+            num_trainings += 1
 
         # evaluate
         fitnesses = {name: np.zeros(args.pop_size) for name in agent_names}
@@ -51,7 +54,8 @@ def evolve(args: argparse.Namespace):
         for name in agent_names:
             populations[name].fitnesses = fitnesses[name]
 
-        break
-        # selection
-
-        # reproduce
+        # selection, reproduction
+        percent_survival = get_percent_survival_evals(num_trainings, args.max_trainings)
+        num_survivors = max(2, math.ceil(args.pop_size * percent_survival))
+        for name in agent_names:
+            populations[name].update(num_survivors)

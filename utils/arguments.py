@@ -14,6 +14,7 @@ def get_args() -> argparse.Namespace:
 
     # Coevolution Hyperparameters
     parser.add_argument("--pop-size", type=int, default=10, help="population size")
+    parser.add_argument("--max-trainings", type=int, default=250, help="maximum number of trainings")
     parser.add_argument("--robot-shape", type=tuple, default=(5, 5), help="shape of the robot")
     parser.add_argument("--eval-num-opponents", type=int, default=3, help="number of opponents to evaluate")
 

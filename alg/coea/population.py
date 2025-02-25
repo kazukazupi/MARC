@@ -13,33 +13,37 @@ from alg.coea.structure import Structure, mutate
 
 class Population:
 
-    def __init__(self, agent_name: str, save_path: str, args: argparse.Namespace):
+    def __init__(self, agent_name: str, save_path: str, args: argparse.Namespace, is_continuing: bool = False):
 
         self.agent_name = agent_name
         self.save_path = save_path
-        os.mkdir(self.save_path)
-
         self.csv_path = os.path.join(self.save_path, "fitnesses.csv")
-        with open(self.csv_path, "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["generation"] + [f"id{i:02}" for i in range(args.pop_size)])
-
         self.structures: List[Structure] = []
         self.population_structure_hashes: Dict[str, bool] = {}
-
         self.generation = 0
-        generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
-        os.mkdir(generation_path)
 
-        # generate a population
-        for id_ in range(args.pop_size):
+        if not is_continuing:
 
-            body, connections = sample_robot(args.robot_shape)
-            while hashable(body) in self.population_structure_hashes:
+            # create log files
+            os.mkdir(self.save_path)
+            with open(self.csv_path, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(["generation"] + [f"id{i:02}" for i in range(args.pop_size)])
+            generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+            os.mkdir(generation_path)
+
+            # generate a population
+            for id_ in range(args.pop_size):
+
                 body, connections = sample_robot(args.robot_shape)
+                while hashable(body) in self.population_structure_hashes:
+                    body, connections = sample_robot(args.robot_shape)
 
-            self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
-            self.population_structure_hashes[hashable(body)] = True
+                self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
+                self.population_structure_hashes[hashable(body)] = True
+
+        else:
+            raise NotImplementedError("Continuing from a saved population is not implemented yet.")
 
     def update(self, num_survivors: int, num_reproductions: int):
         logging.info(f"Updating {self.agent_name} population")

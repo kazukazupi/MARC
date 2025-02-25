@@ -4,6 +4,7 @@ import math
 import os
 
 import numpy as np
+import torch
 
 from alg.coea.coea_utils import get_matches, get_percent_survival_evals
 from alg.coea.population import Population
@@ -70,7 +71,7 @@ def evolve(args: argparse.Namespace):
                 structures,
                 args.env_name,
                 num_processes=1,
-                device=args.device,
+                device=torch.device("cpu"),
                 min_num_episodes=1,
                 seed=None,
             )

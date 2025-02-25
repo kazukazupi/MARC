@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from typing import Dict, Optional
 
@@ -14,13 +15,14 @@ class Structure:
         self.body = body
         self.connections = connections
         self.fitness = -np.inf
-        self.is_trained = False
-        self.is_died = False
 
         if save:
             os.mkdir(self.save_path)
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
+            with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
+                metadata = {"is_trained": False, "is_died": False}
+                json.dump(metadata, f, indent=4)
 
     def get_latest_controller_path(self) -> str:
         controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
@@ -32,6 +34,36 @@ class Structure:
         body = np.load(os.path.join(save_path, "body.npy"))
         connections = np.load(os.path.join(save_path, "connections.npy"))
         return cls(save_path, body, connections, save=False)
+
+    @property
+    def is_trained(self) -> bool:
+        with open(os.path.join(self.save_path, "metadata.json")) as f:
+            metadata = json.load(f)
+        return metadata["is_trained"]
+
+    @is_trained.setter
+    def is_trained(self, value: bool) -> None:
+        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
+            metadata = json.load(f)
+            metadata["is_trained"] = value
+            f.seek(0)
+            json.dump(metadata, f, indent=4)
+            f.truncate()
+
+    @property
+    def is_died(self) -> bool:
+        with open(os.path.join(self.save_path, "metadata.json")) as f:
+            metadata = json.load(f)
+        return metadata["is_died"]
+
+    @is_died.setter
+    def is_died(self, value: bool) -> None:
+        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
+            metadata = json.load(f)
+            metadata["is_died"] = value
+            f.seek(0)
+            json.dump(metadata, f, indent=4)
+            f.truncate()
 
 
 def mutate(

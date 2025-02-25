@@ -18,7 +18,7 @@ class Population:
         self.agent_name = agent_name
         self.save_path = save_path
         os.mkdir(self.save_path)
-        
+
         self.csv_path = os.path.join(self.save_path, "fitnesses.csv")
         with open(self.csv_path, "w") as f:
             writer = csv.writer(f)

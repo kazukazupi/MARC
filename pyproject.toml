@@ -16,6 +16,7 @@ pytest = "^8.3.4"
 numpy = "1.23"
 pyproject-flake8 = "^7.0.0"
 stable-baselines3 = "2.0.0"
+seaborn = "^0.13.2"
 
 [tool.black]
 line-length = 119
@@ -28,10 +29,11 @@ line_length = 119
 check_untyped_defs = true
 disallow_subclassing_any = false
 warn_unreachable = true
+exclude = "legacy/.*"
 
 [tool.flake8]
 max-line-length = 119
-exclude = ".venv"
+exclude = ".venv,legacy"
 
 [build-system]
 requires = ["poetry-core"]

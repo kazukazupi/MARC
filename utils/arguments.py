@@ -1,4 +1,5 @@
 import argparse
+import warnings
 
 import torch
 
@@ -10,6 +11,12 @@ def get_args() -> argparse.Namespace:
     # General arguments
     parser.add_argument("--env-name", type=str, default="Sumo-v0", help="environment name")
     parser.add_argument("--exp-dirname", type=str, default="log", help="directory name to save models")
+
+    # Coevolution Hyperparameters
+    parser.add_argument("--pop-size", type=int, default=10, help="population size")
+    parser.add_argument("--max-trainings", type=int, default=250, help="maximum number of trainings")
+    parser.add_argument("--robot-shape", type=tuple, default=(5, 5), help="shape of the robot")
+    parser.add_argument("--eval-num-opponents", type=int, default=3, help="number of opponents to evaluate")
 
     # PPO Logging
     parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")
@@ -40,5 +47,8 @@ def get_args() -> argparse.Namespace:
     args = parser.parse_args()
 
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    if args.pop_size < args.eval_num_opponents:
+        warnings.warn("eval_num_opponents should be less than or equal to pop_size")
 
     return args

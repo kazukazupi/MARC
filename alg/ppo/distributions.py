@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from alg.ppo.utils import AddBias, init
+from alg.ppo.ppo_utils import AddBias, init
 
 
 class FixedNormal(torch.distributions.Normal):

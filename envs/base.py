@@ -9,6 +9,7 @@ from gymnasium import spaces  # type: ignore
 from pettingzoo import ParallelEnv  # type: ignore
 
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
+from utils import get_agent_names
 
 
 class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
@@ -26,7 +27,7 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
         y_positions: List[int],
     ):
 
-        self.possible_agents = [f"robot_{i+1}" for i in range(len(body_list))]
+        self.possible_agents = get_agent_names()
         self.agents: List[str] = []
         self.timestep: Optional[int] = None
 

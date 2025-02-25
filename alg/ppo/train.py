@@ -1,67 +1,40 @@
 import argparse
 import csv
-import json
 import os
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import numpy as np
 import torch
 
+from alg.coea.structure import Structure
 from alg.ppo.model import Agent
 from alg.ppo.multi_agent_envs import make_vec_envs
 from alg.ppo.ppo import PPO
+from alg.ppo.ppo_utils import update_linear_schedule
 from alg.ppo.storage import RolloutStorage
-from alg.ppo.utils import update_linear_schedule
 from envs import AgentID
+from utils import get_agent_names
 
 
 def train(
-    save_path: str,
     args: argparse.Namespace,
-    body_1: np.ndarray,
-    body_2: np.ndarray,
-    connections_1: Optional[np.ndarray] = None,
-    connections_2: Optional[np.ndarray] = None,
+    structures: Dict[AgentID, Structure],
 ):
 
-    os.makedirs(save_path)
-
-    vec_env = make_vec_envs(
-        args.env_name,
-        args.num_processes,
-        args.gamma,
-        args.device,
-        body_1=body_1,
-        body_2=body_2,
-        connections_1=connections_1,
-        connections_2=connections_2,
-    )
+    assert any([not s.is_trained for s in structures.values()]), "already trained."
 
     agents: Dict[AgentID, Agent] = {}
     opponents: Dict[AgentID, Agent] = {}
     updaters: Dict[AgentID, PPO] = {}
     rollouts: Dict[AgentID, RolloutStorage] = {}
-    log_dirs: Dict[AgentID, str] = {}
     train_csv_paths: Dict[AgentID, str] = {}
-    eval_csv_paths: Dict[AgentID, str] = {}
     vec_envs = {}
     opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
     controller_paths: Dict[AgentID, List[str]] = {}
 
-    agnet_ids = ["robot_1", "robot_2"]
+    agent_names = get_agent_names()
 
-    with open(os.path.join(save_path, "env_info.json"), "w") as f:
-        json.dump(
-            {
-                "env_name": args.env_name,
-                "agents": agnet_ids,
-            },
-            f,
-            indent=2,
-        )
-
-    for a, o in zip(agnet_ids, reversed(agnet_ids)):
+    for a, o in zip(agent_names, reversed(agent_names)):
 
         # Initialize environment
         vec_envs[a] = make_vec_envs(
@@ -70,15 +43,15 @@ def train(
             args.gamma,
             args.device,
             training={a: True, o: False},
-            body_1=body_1,
-            body_2=body_2,
-            connections_1=connections_1,
-            connections_2=connections_2,
+            body_1=structures[agent_names[0]].body,
+            body_2=structures[agent_names[1]].body,
+            connections_1=structures[agent_names[0]].connections,
+            connections_2=structures[agent_names[1]].connections,
         )
 
         # Create agent
-        obs_dim = vec_env.observation_space(a).shape[0]
-        action_dim = vec_env.action_space(a).shape[0]
+        obs_dim = vec_envs[a].observation_space(a).shape[0]
+        action_dim = vec_envs[a].action_space(a).shape[0]
         agents[a] = Agent(
             obs_dim=obs_dim,
             hidden_dim=64,
@@ -120,36 +93,18 @@ def train(
         rollouts[a].to(args.device)
         opponents_last_obs[o] = observations[o]
 
-        # Create log files
-        log_dirs[a] = os.path.join(save_path, a)
-        os.mkdir(log_dirs[a])
-
-        if a == "robot_1":
-            np.save(os.path.join(log_dirs[a], "body.npy"), body_1)
-            if connections_1 is not None:
-                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_1)
-        else:
-            np.save(os.path.join(log_dirs[a], "body.npy"), body_2)
-            if connections_2 is not None:
-                np.save(os.path.join(log_dirs[a], "connections.npy"), connections_2)
-
-        train_csv_paths[a] = os.path.join(log_dirs[a], "train_log.csv")
-        eval_csv_paths[a] = os.path.join(log_dirs[a], "eval_log.csv")
+        train_csv_paths[a] = os.path.join(structures[a].save_path, "train_log.csv")
         controller_paths[a] = []
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
             writer.writerow(["updates", "num timesteps", "train reward"])
 
-        with open(eval_csv_paths[a], "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["updates", "num timesteps", "eval rewrard"])
-
     actions = {}
 
     for j in range(args.num_updates):
 
-        for a, o in zip(agnet_ids, reversed(agnet_ids)):
+        for a, o in zip(agent_names, reversed(agent_names)):
 
             update_linear_schedule(updaters[a].optimizer, j, args.num_updates, args.lr)
 
@@ -194,7 +149,7 @@ def train(
             rollouts[a].after_update()
 
             if j % args.save_interval == 0:
-                controller_path = os.path.join(log_dirs[a], f"controller_{j}.pt")
+                controller_path = os.path.join(structures[a].save_path, f"controller_{j}.pt")
                 controller_paths[a].append(controller_path)
                 torch.save(
                     [
@@ -203,3 +158,6 @@ def train(
                     ],
                     controller_path,
                 )
+
+    for a in agent_names:
+        structures[a].is_trained = True

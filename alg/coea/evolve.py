@@ -31,7 +31,9 @@ def evolve(args: argparse.Namespace):
 
     agent_names = get_agent_names()
 
-    populations = {name: Population(name, os.path.join(save_path, name), args) for name in agent_names}
+    populations = {
+        name: Population(name, os.path.join(save_path, name), args.pop_size, args.robot_shape) for name in agent_names
+    }
     num_trainings = 0
 
     while True:

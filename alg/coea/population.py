@@ -1,9 +1,8 @@
-import argparse
 import csv
 import logging
 import os
 import random
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 from evogym import hashable, sample_robot  # type: ignore
@@ -13,7 +12,9 @@ from alg.coea.structure import Structure, mutate
 
 class Population:
 
-    def __init__(self, agent_name: str, save_path: str, args: argparse.Namespace, is_continuing: bool = False):
+    def __init__(
+        self, agent_name: str, save_path: str, pop_size: int, robot_shape: Tuple[int, int], is_continuing: bool = False
+    ):
 
         self.agent_name = agent_name
         self.save_path = save_path
@@ -28,22 +29,46 @@ class Population:
             os.mkdir(self.save_path)
             with open(self.csv_path, "w") as f:
                 writer = csv.writer(f)
-                writer.writerow(["generation"] + [f"id{i:02}" for i in range(args.pop_size)])
+                writer.writerow(["generation"] + [f"id{i:02}" for i in range(pop_size)])
             generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
             os.mkdir(generation_path)
 
             # generate a population
-            for id_ in range(args.pop_size):
+            for id_ in range(pop_size):
 
-                body, connections = sample_robot(args.robot_shape)
+                body, connections = sample_robot(robot_shape)
                 while hashable(body) in self.population_structure_hashes:
-                    body, connections = sample_robot(args.robot_shape)
+                    body, connections = sample_robot(robot_shape)
 
                 self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
                 self.population_structure_hashes[hashable(body)] = True
 
         else:
-            raise NotImplementedError("Continuing from a saved population is not implemented yet.")
+            assert os.path.exists(self.save_path)
+            assert os.path.exists(self.csv_path)
+            generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+
+            while os.path.exists(generation_path):
+
+                for id_ in range(pop_size):
+                    structure_path = os.path.join(generation_path, f"id{id_:02}")
+
+                    if self.generation == 0:
+                        assert os.path.exists(structure_path)
+                        structure = Structure.from_save_path(structure_path)
+                        self.structures.append(structure)
+                    else:
+                        if not os.path.exists(structure_path):
+                            continue
+                        structure = Structure.from_save_path(structure_path)
+                        self.structures[id_] = structure
+
+                    self.population_structure_hashes[hashable(structure.body)] = True
+
+                self.generation += 1
+                generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+
+            self.generation -= 1
 
     def update(self, num_survivors: int, num_reproductions: int):
         logging.info(f"Updating {self.agent_name} population")

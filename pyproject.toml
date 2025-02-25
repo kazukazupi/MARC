@@ -35,6 +35,11 @@ exclude = "legacy/.*"
 max-line-length = 119
 exclude = ".venv,legacy"
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:evogym.envs.base"
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

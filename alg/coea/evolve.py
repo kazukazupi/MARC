@@ -10,7 +10,7 @@ from alg.coea.coea_utils import get_matches, get_percent_survival_evals
 from alg.coea.population import Population
 from alg.ppo import train
 from evaluate import evaluate
-from utils import get_agent_names
+from utils import get_agent_names, save_args
 
 
 def evolve(args: argparse.Namespace):
@@ -26,6 +26,8 @@ def evolve(args: argparse.Namespace):
         format="%(asctime)s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
     )
     logging.info(f"Starting experiment at {save_path}")
+
+    save_args(args, os.path.join(save_path, "args.json"))
 
     agent_names = get_agent_names()
 

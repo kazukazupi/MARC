@@ -1,8 +1,14 @@
 __pycache__
 *.log
 *.png
+*.jpg
+*.mp4
+*.gif
 *.pt
+*.pth
 *.csv
 *.json
 *.npy
+*.zip
+*.out
 neat-checkpoint-*

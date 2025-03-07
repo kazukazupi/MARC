@@ -42,8 +42,6 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
 
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
 
-        self.default_viewer.track_objects(*self.possible_agents)
-
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
         raise NotImplementedError
 

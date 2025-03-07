@@ -39,6 +39,12 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
             y_positions,
         )
 
+        if render_options is not None and render_options["disable_tracking"]:
+            # TODO: ウィンドウサイズも設定する
+            self.default_viewer.set_pos((17.5, 4))
+        else:
+            self.default_viewer.track_objects(*self.possible_agents)
+
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
         assert self.timestep is not None, "You must call reset before calling step"

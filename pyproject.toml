@@ -4,6 +4,11 @@ version = "0.1.0"
 description = ""
 authors = ["kazukazupi <22kazuaki22@gmail.com>"]
 readme = "README.md"
+packages = [
+    {include = "alg"},
+    {include = "envs"},
+    {include = "utils"}
+]
 
 [tool.poetry.dependencies]
 python = "3.10.13"

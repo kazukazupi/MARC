@@ -82,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--experiment-dir", type=str, required=True)
     parser.add_argument("--generations", type=int, nargs="+")
     parser.add_argument("--render-mode", choices=["human", "rgb_array"], default="human")
+    parser.add_argument("--disable-tracking", action="store_true", help="Disable tracking")
     parser.add_argument("--video-path", type=str, default="output.mp4")
     parser.add_argument("--low-quality", action="store_true")
 
@@ -112,6 +113,8 @@ if __name__ == "__main__":
     env_name = "Sumo-v0"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    render_options = {"disable_tracking": True} if args.disable_tracking else None
+
     gen = visualize(
         structures,
         env_name,
@@ -119,6 +122,7 @@ if __name__ == "__main__":
         device=device,
         min_num_episodes=1,
         render_mode=args.render_mode,
+        render_options=render_options,
     )
 
     if args.render_mode == "rgb_array":

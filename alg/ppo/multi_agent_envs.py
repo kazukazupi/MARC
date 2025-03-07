@@ -80,6 +80,10 @@ class MultiAgentDummyVecEnv:
     def action_space(self, agent):
         return self.envs[0].action_space(agent)
 
+    def render(self):
+        assert self.num_envs == 1, "Rendering is only supported for one environment."
+        return self.envs[0].render()
+
 
 # TODO: テストを行う必要あり（visualize_envとreturnが一致しない）
 class MultiAgentVecNormalize(MultiAgentDummyVecEnv):

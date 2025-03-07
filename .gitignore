@@ -2,6 +2,7 @@ __pycache__
 *.log
 *.png
 *.jpg
+*.pdf
 *.mp4
 *.gif
 *.pt

@@ -5,6 +5,7 @@ from typing import Dict, Optional
 
 import numpy as np
 from evogym import draw, get_full_connectivity, get_uniform, has_actuator, hashable, is_connected  # type: ignore
+from pydantic import BaseModel
 
 
 class Structure:
@@ -19,9 +20,12 @@ class Structure:
             os.mkdir(self.save_path)
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
-            with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
-                metadata = {"is_trained": False, "is_died": False, "fitness": None}
-                json.dump(metadata, f, indent=4)
+            self.metadata = StructureMetadata(is_trained=False, is_died=False, fitness=None)
+            self.dump_metadata()
+        else:
+            with open(os.path.join(self.save_path, "metadata.json"), "r") as f:
+                metadata_dict = json.load(f)
+            self.metadata = StructureMetadata(**metadata_dict)
 
     def get_latest_controller_path(self) -> str:
         controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
@@ -36,48 +40,40 @@ class Structure:
 
     @property
     def fitness(self) -> Optional[float]:
-        with open(os.path.join(self.save_path, "metadata.json")) as f:
-            metadata = json.load(f)
-        return metadata["fitness"]
+        return self.metadata.fitness
 
     @fitness.setter
     def fitness(self, value: float) -> None:
-        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
-            metadata = json.load(f)
-            metadata["fitness"] = value
-            f.seek(0)
-            json.dump(metadata, f, indent=4)
-            f.truncate()
+        self.metadata.fitness = value
+        self.dump_metadata()
 
     @property
     def is_trained(self) -> bool:
-        with open(os.path.join(self.save_path, "metadata.json")) as f:
-            metadata = json.load(f)
-        return metadata["is_trained"]
+        return self.metadata.is_trained
 
     @is_trained.setter
     def is_trained(self, value: bool) -> None:
-        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
-            metadata = json.load(f)
-            metadata["is_trained"] = value
-            f.seek(0)
-            json.dump(metadata, f, indent=4)
-            f.truncate()
+        self.metadata.is_trained = value
+        self.dump_metadata()
 
     @property
     def is_died(self) -> bool:
-        with open(os.path.join(self.save_path, "metadata.json")) as f:
-            metadata = json.load(f)
-        return metadata["is_died"]
+        return self.metadata.is_died
 
     @is_died.setter
     def is_died(self, value: bool) -> None:
-        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
-            metadata = json.load(f)
-            metadata["is_died"] = value
-            f.seek(0)
-            json.dump(metadata, f, indent=4)
-            f.truncate()
+        self.metadata.is_died = value
+        self.dump_metadata()
+
+    def dump_metadata(self) -> None:
+        with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
+            json.dump(self.metadata.model_dump(), f, indent=4)
+
+
+class StructureMetadata(BaseModel):
+    is_trained: bool
+    is_died: bool
+    fitness: Optional[float]
 
 
 def mutate(

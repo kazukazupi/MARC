@@ -74,7 +74,9 @@ class Population:
         logging.info(f"Updating {self.agent_name} population")
 
         # selection
-        fitnesses_ = np.array([f if f is not None else -np.inf for f in self.fitnesses])
+        if any(fitness is None for fitness in self.fitnesses):
+            raise ValueError("All fitnesses must be set before updating the population.")
+        fitnesses_ = np.array(self.fitnesses)
         sorted_args = np.argsort(-fitnesses_)
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]

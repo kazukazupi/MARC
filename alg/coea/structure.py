@@ -14,14 +14,13 @@ class Structure:
         self.save_path = save_path
         self.body = body
         self.connections = connections
-        self.fitness = -np.inf
 
         if save:
             os.mkdir(self.save_path)
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
             with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
-                metadata = {"is_trained": False, "is_died": False}
+                metadata = {"is_trained": False, "is_died": False, "fitness": -np.inf}
                 json.dump(metadata, f, indent=4)
 
     def get_latest_controller_path(self) -> str:
@@ -34,6 +33,21 @@ class Structure:
         body = np.load(os.path.join(save_path, "body.npy"))
         connections = np.load(os.path.join(save_path, "connections.npy"))
         return cls(save_path, body, connections, save=False)
+
+    @property
+    def fitness(self) -> float:
+        with open(os.path.join(self.save_path, "metadata.json")) as f:
+            metadata = json.load(f)
+        return metadata["fitness"]
+
+    @fitness.setter
+    def fitness(self, value: float) -> None:
+        with open(os.path.join(self.save_path, "metadata.json"), "r+") as f:
+            metadata = json.load(f)
+            metadata["fitness"] = value
+            f.seek(0)
+            json.dump(metadata, f, indent=4)
+            f.truncate()
 
     @property
     def is_trained(self) -> bool:

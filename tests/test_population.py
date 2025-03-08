@@ -25,8 +25,12 @@ def test_population_load():
             assert population.generation == loaded_population.generation
             assert population.population_structure_hashes == loaded_population.population_structure_hashes
             for structure, loaded_structure in zip(population.structures, loaded_population.structures):
+                assert structure.save_path == loaded_structure.save_path
                 assert np.array_equal(structure.body, loaded_structure.body)
                 assert np.array_equal(structure.connections, loaded_structure.connections)
+                assert structure.is_trained == loaded_structure.is_trained
+                assert structure.is_died == loaded_structure.is_died
+                assert structure.fitness == loaded_structure.fitness
 
             population.fitnesses = np.random.rand(pop_size)
             population.update(2, 3)

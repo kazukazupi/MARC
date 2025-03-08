@@ -20,7 +20,7 @@ class Structure:
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
             with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
-                metadata = {"is_trained": False, "is_died": False, "fitness": -np.inf}
+                metadata = {"is_trained": False, "is_died": False, "fitness": None}
                 json.dump(metadata, f, indent=4)
 
     def get_latest_controller_path(self) -> str:
@@ -35,7 +35,7 @@ class Structure:
         return cls(save_path, body, connections, save=False)
 
     @property
-    def fitness(self) -> float:
+    def fitness(self) -> Optional[float]:
         with open(os.path.join(self.save_path, "metadata.json")) as f:
             metadata = json.load(f)
         return metadata["fitness"]

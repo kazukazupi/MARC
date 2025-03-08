@@ -2,8 +2,8 @@ import argparse
 import logging
 import math
 import os
+from typing import Dict, List, Optional
 
-import numpy as np
 import torch
 
 from alg.coea.coea_utils import get_matches, get_percent_survival_evals
@@ -59,7 +59,9 @@ def evolve(args: argparse.Namespace):
             num_trainings += 1
 
         # evaluate
-        fitnesses = {name: np.zeros(args.pop_size) for name in agent_names}
+        fitnesses: Dict[str, List[Optional[float]]] = {
+            name: [None for _ in range(args.pop_size)] for name in agent_names
+        }
 
         matches = get_matches(
             populations[agent_names[0]].get_evaluation_indices(),
@@ -81,9 +83,16 @@ def evolve(args: argparse.Namespace):
             )
 
             for name, id in match.items():
-                fitnesses[name][id] += results[name]
+                if fitnesses[name][id] is None:
+                    fitnesses[name][id] = results[name]
+                else:
+                    fitnesses[name][id] = (fitnesses[name][id] or 0.0) + results[name]
 
-        fitnesses = {name: fitnesses[name] / args.eval_num_opponents for name in agent_names}
+        fitnesses = {
+            name: [f / args.eval_num_opponents if f is not None else None for f in fitnesses[name]]
+            for name in agent_names
+        }
+
         for name in agent_names:
             populations[name].fitnesses = fitnesses[name]
 

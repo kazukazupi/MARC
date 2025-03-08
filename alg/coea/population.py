@@ -2,7 +2,7 @@ import csv
 import logging
 import os
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from evogym import hashable, sample_robot  # type: ignore
@@ -74,7 +74,8 @@ class Population:
         logging.info(f"Updating {self.agent_name} population")
 
         # selection
-        sorted_args = np.argsort(-self.fitnesses)
+        fitnesses_ = np.array([f if f is not None else -np.inf for f in self.fitnesses])
+        sorted_args = np.argsort(-fitnesses_)
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
         logging.info(f"Survivors: {','.join(map(str, survivors))}")
@@ -112,11 +113,11 @@ class Population:
         return indices
 
     @property
-    def fitnesses(self) -> np.ndarray:
-        return np.array([structure.fitness for structure in self.structures])
+    def fitnesses(self) -> List[Optional[float]]:
+        return [structure.fitness for structure in self.structures]
 
     @fitnesses.setter
-    def fitnesses(self, fitnesses: np.ndarray) -> None:
+    def fitnesses(self, fitnesses: List[Optional[float]]) -> None:
         if len(fitnesses) != len(self.structures):
             raise ValueError("Length of fitnesses does not match the number of structures.")
 

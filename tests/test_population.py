@@ -1,3 +1,4 @@
+import random
 import shutil
 
 import numpy as np
@@ -32,7 +33,7 @@ def test_population_load():
                 assert structure.is_died == loaded_structure.is_died
                 assert structure.fitness == loaded_structure.fitness
 
-            population.fitnesses = np.random.rand(pop_size)
+            population.fitnesses = [random.random() for _ in range(pop_size)]
             population.update(2, 3)
 
     finally:

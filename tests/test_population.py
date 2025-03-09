@@ -6,6 +6,39 @@ import numpy as np
 from alg.coea.population import Population
 
 
+def test_scores():
+
+    agent_name = "test"
+    save_path = "tests/tmp_scores"
+    pop_size = 25
+    eval_num_opponents = 15
+    robot_shape = (5, 5)
+
+    try:
+        population = Population(agent_name, save_path, pop_size, robot_shape)
+
+        scores = np.random.rand(pop_size, eval_num_opponents)
+
+        for i in range(pop_size):
+            for j in range(eval_num_opponents):
+                population.set_score(i, j, scores[i, j])
+
+        for i in range(pop_size):
+            assert population.fitnesses[i] == np.mean(scores[i])
+
+        to_delete_indices = [10, 13]
+        for i in to_delete_indices:
+            population.delete_score(i)
+        scores = np.delete(scores, to_delete_indices, axis=1)
+
+        for i in range(pop_size):
+            assert population.fitnesses[i] == np.mean(scores[i])
+
+    finally:
+        shutil.rmtree(save_path)
+        pass
+
+
 def test_population_load():
 
     try:
@@ -33,7 +66,11 @@ def test_population_load():
                 assert structure.is_died == loaded_structure.is_died
                 assert structure.fitness == loaded_structure.fitness
 
-            population.fitnesses = [random.random() for _ in range(pop_size)]
+            # set fitnesses
+            for i in range(pop_size):
+                for j in range(pop_size):
+                    population.set_score(i, j, random.random())
+
             population.update(2, 3)
 
     finally:

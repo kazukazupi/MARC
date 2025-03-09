@@ -70,14 +70,14 @@ class Population:
 
             self.generation -= 1
 
-    def update(self, num_survivors: int, num_reproductions: int):
+    def update(self, num_survivors: int, num_reproductions: int) -> List[int]:
         logging.info(f"Updating {self.agent_name} population")
 
         # selection
         if any(fitness is None for fitness in self.fitnesses):
             raise ValueError("All fitnesses must be set before updating the population.")
         fitnesses_ = np.array(self.fitnesses)
-        sorted_args = np.argsort(-fitnesses_)
+        sorted_args = list(np.argsort(-fitnesses_))
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
         logging.info(f"Survivors: {','.join(map(str, survivors))}")
@@ -104,6 +104,8 @@ class Population:
             self.structures[id_] = child
             self.population_structure_hashes[hashable(child.body)] = True
 
+        return non_survivors
+
     def get_training_indices(self) -> List[int]:
         indices = [idx for idx, structure in enumerate(self.structures) if not structure.is_trained]
         return indices
@@ -114,21 +116,22 @@ class Population:
         ]
         return indices
 
+    def set_score(self, self_id: int, opponent_id: int, score: float) -> None:
+        self.structures[self_id].set_score(opponent_id, score)
+
+    def delete_score(self, opponent_id: int) -> None:
+        for structure in self.structures:
+            if structure.has_fought(opponent_id):
+                structure.delete_score(opponent_id)
+
     @property
     def fitnesses(self) -> List[Optional[float]]:
         return [structure.fitness for structure in self.structures]
 
-    @fitnesses.setter
-    def fitnesses(self, fitnesses: List[Optional[float]]) -> None:
-        if len(fitnesses) != len(self.structures):
-            raise ValueError("Length of fitnesses does not match the number of structures.")
-
+    def dump_fitnesses(self) -> None:
         with open(self.csv_path, "a") as f:
             writer = csv.writer(f)
-            writer.writerow([self.generation] + list(fitnesses))
-
-        for structure, fitness in zip(self.structures, fitnesses):
-            structure.fitness = fitness
+            writer.writerow([self.generation] + self.fitnesses)
 
     def __getitem__(self, index: int) -> Structure:
         return self.structures[index]

@@ -20,7 +20,7 @@ class Structure:
             os.mkdir(self.save_path)
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
-            self.metadata = StructureMetadata(is_trained=False, is_died=False, fitness=None)
+            self.metadata = StructureMetadata(is_trained=False, is_died=False)
             self.dump_metadata()
         else:
             with open(os.path.join(self.save_path, "metadata.json"), "r") as f:
@@ -38,14 +38,23 @@ class Structure:
         connections = np.load(os.path.join(save_path, "connections.npy"))
         return cls(save_path, body, connections, save=False)
 
+    def has_fought(self, id_: int) -> bool:
+        return id_ in self.metadata.scores
+
+    def set_score(self, id_: int, score: float) -> None:
+        self.metadata.scores[id_] = score
+        self.dump_metadata()
+
+    def delete_score(self, id_: int) -> None:
+        del self.metadata.scores[id_]
+        self.dump_metadata()
+
     @property
     def fitness(self) -> Optional[float]:
-        return self.metadata.fitness
-
-    @fitness.setter
-    def fitness(self, value: float) -> None:
-        self.metadata.fitness = value
-        self.dump_metadata()
+        if not self.metadata.scores:
+            return None
+        values = list(self.metadata.scores.values())
+        return float(np.mean(values))
 
     @property
     def is_trained(self) -> bool:
@@ -73,7 +82,7 @@ class Structure:
 class StructureMetadata(BaseModel):
     is_trained: bool
     is_died: bool
-    fitness: Optional[float]
+    scores: Dict[int, float] = {}
 
 
 def mutate(

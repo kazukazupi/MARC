@@ -2,7 +2,7 @@ import argparse
 import logging
 import math
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import torch
 
@@ -59,10 +59,6 @@ def evolve(args: argparse.Namespace):
             num_trainings += 1
 
         # evaluate
-        fitnesses: Dict[str, List[Optional[float]]] = {
-            name: [None for _ in range(args.pop_size)] for name in agent_names
-        }
-
         matches = get_matches(
             populations[agent_names[0]].get_evaluation_indices(),
             populations[agent_names[1]].get_evaluation_indices(),
@@ -82,19 +78,12 @@ def evolve(args: argparse.Namespace):
                 seed=None,
             )
 
-            for name, id in match.items():
-                if fitnesses[name][id] is None:
-                    fitnesses[name][id] = results[name]
-                else:
-                    fitnesses[name][id] = (fitnesses[name][id] or 0.0) + results[name]
-
-        fitnesses = {
-            name: [f / args.eval_num_opponents if f is not None else None for f in fitnesses[name]]
-            for name in agent_names
-        }
+            for agent_name in agent_names:
+                opponent_name = agent_names[1] if agent_name == agent_names[0] else agent_names[0]
+                populations[agent_name].set_score(match[agent_name], match[opponent_name], results[agent_name])
 
         for name in agent_names:
-            populations[name].fitnesses = fitnesses[name]
+            populations[name].dump_fitnesses()
 
         if num_trainings >= args.max_trainings:
             break
@@ -103,10 +92,16 @@ def evolve(args: argparse.Namespace):
         percent_survival = get_percent_survival_evals(num_trainings, args.max_trainings)
         num_survivors = max(2, math.ceil(args.pop_size * percent_survival))
         num_reproductions = min(args.pop_size - num_survivors, args.max_trainings - num_trainings)
+        non_survivors_dict: Dict[str, List[int]] = {}
         logging.info(f"Percent survival: {percent_survival}")
         logging.info(f"Num survivors: {num_survivors}")
         logging.info(f"Num reproductions: {num_reproductions}")
         for name in agent_names:
-            populations[name].update(num_survivors, num_reproductions)
+            non_survivors = populations[name].update(num_survivors, num_reproductions)
+            non_survivors_dict[name] = non_survivors
+        for agent_name in agent_names:
+            opponent_name = agent_names[1] if agent_name == agent_names[0] else agent_names[0]
+            for opponent_id in non_survivors_dict[opponent_name]:
+                populations[agent_name].delete_score(opponent_id)
 
     logging.info("Experiment finished")

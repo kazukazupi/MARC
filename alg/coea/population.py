@@ -71,7 +71,7 @@ class Population:
             self.generation -= 1
 
     def update(self, num_survivors: int, num_reproductions: int) -> List[int]:
-        logging.info(f"Updating {self.agent_name} population")
+        logging.info(f"## Updating {self.agent_name} population")
 
         # selection
         if any(fitness is None for fitness in self.fitnesses):

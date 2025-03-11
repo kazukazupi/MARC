@@ -1,6 +1,8 @@
 import random
 from typing import Dict, List
 
+from pydantic import BaseModel
+
 
 def get_matches(
     listA: List[int], listB: List[int], num_opponents: int, agent_names: List[str]
@@ -30,3 +32,9 @@ def get_percent_survival_evals(curr_train: int, max_trains: int) -> float:
     low = 0.0
     high = 0.6
     return ((max_trains - curr_train - 1) / (max_trains - 1)) * (high - low) + low
+
+
+class StructureMetadata(BaseModel):
+    is_trained: bool
+    is_died: bool
+    scores: Dict[int, float] = {}

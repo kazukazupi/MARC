@@ -5,7 +5,8 @@ from typing import Dict, Optional
 
 import numpy as np
 from evogym import draw, get_full_connectivity, get_uniform, has_actuator, hashable, is_connected  # type: ignore
-from pydantic import BaseModel
+
+from alg.coea.coea_utils import StructureMetadata
 
 
 class Structure:
@@ -79,12 +80,6 @@ class Structure:
     def dump_metadata(self) -> None:
         with open(os.path.join(self.save_path, "metadata.json"), "w") as f:
             json.dump(self.metadata.model_dump(), f, indent=4)
-
-
-class StructureMetadata(BaseModel):
-    is_trained: bool
-    is_died: bool
-    scores: Dict[int, float] = {}
 
 
 def mutate(

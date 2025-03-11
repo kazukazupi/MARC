@@ -12,6 +12,7 @@ def get_args() -> argparse.Namespace:
     # General arguments
     parser.add_argument("--env-name", type=str, default="Sumo-v0", help="environment name")
     parser.add_argument("--exp-dirname", type=str, default="log", help="directory name to save models")
+    parser.add_argument("--seed", type=int, default=None, help="random seed")
 
     # Coevolution Hyperparameters
     parser.add_argument("--pop-size", type=int, default=10, help="population size")

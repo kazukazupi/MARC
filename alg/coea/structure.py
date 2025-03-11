@@ -51,6 +51,8 @@ class Structure:
 
     @property
     def fitness(self) -> Optional[float]:
+        if self.is_died:
+            return None
         if not self.metadata.scores:
             return None
         values = list(self.metadata.scores.values())

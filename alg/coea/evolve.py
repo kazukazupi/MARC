@@ -58,8 +58,8 @@ def evolve(args: argparse.Namespace):
             )
             num_trainings += 1
 
-        logging.info(f"# Start Evaluation (Generation {generation})")
         # evaluate
+        logging.info(f"# Start Evaluation (Generation {generation})")
         matches = get_matches(
             populations[agent_names[0]].get_evaluation_indices(),
             populations[agent_names[1]].get_evaluation_indices(),
@@ -69,6 +69,12 @@ def evolve(args: argparse.Namespace):
 
         for match in matches:
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
+
+            if structures[agent_names[0]].has_fought(match[agent_names[1]]):
+                assert structures[agent_names[1]].has_fought(match[agent_names[0]])
+                logging.info(f"Skipped evaluation {match[agent_names[0]]} vs {match[agent_names[1]]}")
+                continue
+
             results = evaluate(
                 structures,
                 args.env_name,

@@ -37,7 +37,8 @@ def evolve(args: argparse.Namespace):
     num_trainings = 0
 
     while True:
-        logging.info(f"Generation {populations[agent_names[0]].generation}")
+        generation = populations[agent_names[0]].generation
+        logging.info(f"# Start Training (Generation {generation})")
 
         # train
         matches = get_matches(
@@ -50,14 +51,14 @@ def evolve(args: argparse.Namespace):
         for match in matches:
             if num_trainings >= args.max_trainings:
                 break
-
-            logging.info(
-                f"Training {match[agent_names[0]]} vs {match[agent_names[1]]} ({num_trainings+1}/{args.max_trainings})"
-            )
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
             train(args, structures)
+            logging.info(
+                f"Trained {match[agent_names[0]]} vs {match[agent_names[1]]} ({num_trainings+1}/{args.max_trainings})"
+            )
             num_trainings += 1
 
+        logging.info(f"# Start Evaluation (Generation {generation})")
         # evaluate
         matches = get_matches(
             populations[agent_names[0]].get_evaluation_indices(),
@@ -67,7 +68,6 @@ def evolve(args: argparse.Namespace):
         )
 
         for match in matches:
-            logging.info(f"Evaluating {match[agent_names[0]]} vs {match[agent_names[1]]}")
             structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
             results = evaluate(
                 structures,
@@ -81,6 +81,10 @@ def evolve(args: argparse.Namespace):
             for agent_name in agent_names:
                 opponent_name = agent_names[1] if agent_name == agent_names[0] else agent_names[0]
                 populations[agent_name].set_score(match[agent_name], match[opponent_name], results[agent_name])
+            logging.info(
+                f"Evaluated {match[agent_names[0]]}({results[agent_names[0]]:.3f}) "
+                f"vs {match[agent_names[1]]}({results[agent_names[1]]:.3f})"
+            )
 
         for name in agent_names:
             populations[name].dump_fitnesses()
@@ -89,11 +93,12 @@ def evolve(args: argparse.Namespace):
             break
 
         # selection, reproduction
+        logging.info(f"# Start Selection, Reproduction (Generation {generation})")
         percent_survival = get_percent_survival_evals(num_trainings, args.max_trainings)
         num_survivors = max(2, math.ceil(args.pop_size * percent_survival))
         num_reproductions = min(args.pop_size - num_survivors, args.max_trainings - num_trainings)
         non_survivors_dict: Dict[str, List[int]] = {}
-        logging.info(f"Percent survival: {percent_survival}")
+        logging.info(f"Percent survival: {percent_survival * 100:.2f}%")
         logging.info(f"Num survivors: {num_survivors}")
         logging.info(f"Num reproductions: {num_reproductions}")
         for name in agent_names:

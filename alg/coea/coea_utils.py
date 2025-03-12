@@ -1,11 +1,19 @@
+import json
+import os
 import random
-from typing import Dict, List
+from typing import Dict, List, Literal
 
 from pydantic import BaseModel
 
 
 def get_matches(
-    listA: List[int], listB: List[int], num_opponents: int, agent_names: List[str]
+    listA: List[int],
+    listB: List[int],
+    num_opponents: int,
+    agent_names: List[str],
+    metadata_dir_path: str,
+    generation: int,
+    mode: Literal["train", "eval"],
 ) -> List[Dict[str, int]]:
 
     assert len(listA) == len(listB), "Lists must be of equal length"
@@ -25,6 +33,11 @@ def get_matches(
                 }
             )
 
+    save_path = os.path.join(metadata_dir_path, f"{mode}_match_metadata.json")
+    match_metadata = MatchMetadata(generation=generation, matches=matching)
+    with open(save_path, "w") as f:
+        json.dump(match_metadata.model_dump(), f, indent=4)
+
     return matching
 
 
@@ -38,3 +51,8 @@ class StructureMetadata(BaseModel):
     is_trained: bool
     is_died: bool
     scores: Dict[int, float] = {}
+
+
+class MatchMetadata(BaseModel):
+    generation: int
+    matches: List[Dict[str, int]]

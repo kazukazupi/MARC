@@ -16,7 +16,9 @@ from utils import get_agent_names, save_args
 def evolve(args: argparse.Namespace):
 
     save_path = os.path.join("experiments", "coea", args.env_name, args.exp_dirname)
+    metadata_dir_path = os.path.join(save_path, "metadata")
     os.makedirs(save_path)
+    os.mkdir(metadata_dir_path)
 
     log_file = os.path.join(save_path, "experiment.log")
     logging.basicConfig(
@@ -27,7 +29,7 @@ def evolve(args: argparse.Namespace):
     )
     logging.info(f"Starting experiment at {save_path}")
 
-    save_args(args, os.path.join(save_path, "args.json"))
+    save_args(args, metadata_dir_path)
 
     agent_names = get_agent_names()
 
@@ -46,6 +48,9 @@ def evolve(args: argparse.Namespace):
             populations[agent_names[1]].get_training_indices(),
             1,
             agent_names,
+            metadata_dir_path,
+            generation,
+            "train",
         )
 
         for match in matches:
@@ -65,6 +70,9 @@ def evolve(args: argparse.Namespace):
             populations[agent_names[1]].get_evaluation_indices(),
             args.eval_num_opponents,
             agent_names,
+            metadata_dir_path,
+            generation,
+            "eval",
         )
 
         for match in matches:

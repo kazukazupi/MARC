@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import warnings
 
 import torch
@@ -56,15 +57,17 @@ def get_args() -> argparse.Namespace:
     return args
 
 
-def save_args(args: argparse.Namespace, save_path: str) -> None:
+def save_args(args: argparse.Namespace, metadata_dir_path: str) -> None:
+    save_path = os.path.join(metadata_dir_path, "args.json")
     with open(save_path, "w") as f:
         args_dict = vars(args).copy()
         args_dict.pop("device", None)
         json.dump(args_dict, f, indent=4)
 
 
-def load_args(load_path: str) -> argparse.Namespace:
-    with open(load_path, "r") as f:
+def load_args(metadata_dir_path: str) -> argparse.Namespace:
+    save_path = os.path.join(metadata_dir_path, "args.json")
+    with open(save_path, "r") as f:
         args_dict = json.load(f)
     args = argparse.Namespace(**args_dict)
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

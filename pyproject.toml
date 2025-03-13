@@ -22,6 +22,7 @@ numpy = "1.23"
 pyproject-flake8 = "^7.0.0"
 stable-baselines3 = "2.0.0"
 seaborn = "^0.13.2"
+pydantic = "^2.10.6"
 
 [tool.black]
 line-length = 119
@@ -39,6 +40,11 @@ exclude = "legacy/.*"
 [tool.flake8]
 max-line-length = 119
 exclude = ".venv,legacy"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:evogym.envs.base"
+]
 
 [build-system]
 requires = ["poetry-core"]

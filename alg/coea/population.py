@@ -1,9 +1,8 @@
-import argparse
 import csv
 import logging
 import os
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from evogym import hashable, sample_robot  # type: ignore
@@ -13,39 +12,72 @@ from alg.coea.structure import Structure, mutate
 
 class Population:
 
-    def __init__(self, agent_name: str, save_path: str, args: argparse.Namespace):
+    def __init__(
+        self, agent_name: str, save_path: str, pop_size: int, robot_shape: Tuple[int, int], is_continuing: bool = False
+    ):
 
         self.agent_name = agent_name
         self.save_path = save_path
-        os.mkdir(self.save_path)
-
         self.csv_path = os.path.join(self.save_path, "fitnesses.csv")
-        with open(self.csv_path, "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["generation"] + [f"id{i:02}" for i in range(args.pop_size)])
-
         self.structures: List[Structure] = []
         self.population_structure_hashes: Dict[str, bool] = {}
-
         self.generation = 0
-        generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
-        os.mkdir(generation_path)
 
-        # generate a population
-        for id_ in range(args.pop_size):
+        if not is_continuing:
 
-            body, connections = sample_robot(args.robot_shape)
-            while hashable(body) in self.population_structure_hashes:
-                body, connections = sample_robot(args.robot_shape)
+            # create log files
+            os.mkdir(self.save_path)
+            with open(self.csv_path, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(["generation"] + [f"id{i:02}" for i in range(pop_size)])
+            generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+            os.mkdir(generation_path)
 
-            self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
-            self.population_structure_hashes[hashable(body)] = True
+            # generate a population
+            for id_ in range(pop_size):
 
-    def update(self, num_survivors: int, num_reproductions: int):
-        logging.info(f"Updating {self.agent_name} population")
+                body, connections = sample_robot(robot_shape)
+                while hashable(body) in self.population_structure_hashes:
+                    body, connections = sample_robot(robot_shape)
+
+                self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
+                self.population_structure_hashes[hashable(body)] = True
+
+        else:
+            assert os.path.exists(self.save_path)
+            assert os.path.exists(self.csv_path)
+            generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+
+            while os.path.exists(generation_path):
+
+                for id_ in range(pop_size):
+                    structure_path = os.path.join(generation_path, f"id{id_:02}")
+
+                    if self.generation == 0:
+                        assert os.path.exists(structure_path)
+                        structure = Structure.from_save_path(structure_path)
+                        self.structures.append(structure)
+                    else:
+                        if not os.path.exists(structure_path):
+                            continue
+                        structure = Structure.from_save_path(structure_path)
+                        self.structures[id_] = structure
+
+                    self.population_structure_hashes[hashable(structure.body)] = True
+
+                self.generation += 1
+                generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
+
+            self.generation -= 1
+
+    def update(self, num_survivors: int, num_reproductions: int) -> List[int]:
+        logging.info(f"## Updating {self.agent_name} population")
 
         # selection
-        sorted_args = np.argsort(-self.fitnesses)
+        if any(fitness is None for fitness in self.fitnesses):
+            raise ValueError("All fitnesses must be set before updating the population.")
+        fitnesses_ = np.array(self.fitnesses)
+        sorted_args = list(np.argsort(-fitnesses_))
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
         logging.info(f"Survivors: {','.join(map(str, survivors))}")
@@ -72,6 +104,8 @@ class Population:
             self.structures[id_] = child
             self.population_structure_hashes[hashable(child.body)] = True
 
+        return non_survivors
+
     def get_training_indices(self) -> List[int]:
         indices = [idx for idx, structure in enumerate(self.structures) if not structure.is_trained]
         return indices
@@ -82,21 +116,22 @@ class Population:
         ]
         return indices
 
+    def set_score(self, self_id: int, opponent_id: int, score: float) -> None:
+        self.structures[self_id].set_score(opponent_id, score)
+
+    def delete_score(self, opponent_id: int) -> None:
+        for structure in self.structures:
+            if structure.has_fought(opponent_id):
+                structure.delete_score(opponent_id)
+
     @property
-    def fitnesses(self) -> np.ndarray:
-        return np.array([structure.fitness for structure in self.structures])
+    def fitnesses(self) -> List[Optional[float]]:
+        return [structure.fitness for structure in self.structures]
 
-    @fitnesses.setter
-    def fitnesses(self, fitnesses: np.ndarray) -> None:
-        if len(fitnesses) != len(self.structures):
-            raise ValueError("Length of fitnesses does not match the number of structures.")
-
+    def dump_fitnesses(self) -> None:
         with open(self.csv_path, "a") as f:
             writer = csv.writer(f)
-            writer.writerow([self.generation] + list(fitnesses))
-
-        for structure, fitness in zip(self.structures, fitnesses):
-            structure.fitness = fitness
+            writer.writerow([self.generation] + self.fitnesses)
 
     def __getitem__(self, index: int) -> Structure:
         return self.structures[index]

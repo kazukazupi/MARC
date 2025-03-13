@@ -10,3 +10,4 @@ Multi-Agent Robot Co-design
 - doc-* ドキュメントの変更用。
 - mkenv-* evogymの新たな環境開発用。
 - refac-* リファクタ用。
+- util-* 利便性向上のための開発。

@@ -6,37 +6,61 @@ from typing import Dict, List
 
 import torch
 
-from alg.coea.coea_utils import get_matches, get_percent_survival_evals
+from alg.coea.coea_utils import get_matches, get_percent_survival_evals, load_evo_metadata, save_evo_metadata
 from alg.coea.population import Population
 from alg.ppo import train
 from evaluate import evaluate
-from utils import get_agent_names, save_args
+from utils import get_agent_names, load_args, save_args
 
 
 def evolve(args: argparse.Namespace):
 
     save_path = os.path.join("experiments", "coea", args.env_name, args.exp_dirname)
     metadata_dir_path = os.path.join(save_path, "metadata")
-    os.makedirs(save_path)
-    os.mkdir(metadata_dir_path)
-
     log_file = os.path.join(save_path, "experiment.log")
-    logging.basicConfig(
-        level=logging.INFO,
-        filename=log_file,
-        filemode="w",
-        format="%(asctime)s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
-    )
-    logging.info(f"Starting experiment at {save_path}")
-
-    save_args(args, metadata_dir_path)
-
     agent_names = get_agent_names()
 
-    populations = {
-        name: Population(name, os.path.join(save_path, name), args.pop_size, args.robot_shape) for name in agent_names
-    }
-    num_trainings = 0
+    if not args.is_continue:
+
+        os.makedirs(save_path)
+        os.mkdir(metadata_dir_path)
+
+        logging.basicConfig(
+            level=logging.INFO,
+            filename=log_file,
+            filemode="w",
+            format="%(asctime)s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
+        )
+        logging.info(f"Starting experiment at {save_path}")
+
+        save_args(args, metadata_dir_path)
+        save_evo_metadata(metadata_dir_path, 0)
+
+        populations = {
+            name: Population(name, os.path.join(save_path, name), args.pop_size, args.robot_shape)
+            for name in agent_names
+        }
+        num_trainings = 0
+
+    else:
+        assert os.path.exists(save_path), "Experiment directory does not exist"
+        assert os.path.exists(metadata_dir_path), "Metadata directory does not exist"
+        assert os.path.exists(log_file), "Log file does not exist"
+
+        logging.basicConfig(
+            level=logging.INFO,
+            filename=log_file,
+            filemode="a",
+            format="%(asctime)s - %(levelname)s - %(name)s.%(funcName)s - %(message)s",
+        )
+        logging.info(f"Continuing experiment at {save_path}")
+
+        args = load_args(metadata_dir_path)
+        num_trainings = load_evo_metadata(metadata_dir_path)
+        populations = {
+            name: Population(name, os.path.join(save_path, name), args.pop_size, args.robot_shape, is_continuing=True)
+            for name in agent_names
+        }
 
     while True:
         generation = populations[agent_names[0]].generation
@@ -62,6 +86,7 @@ def evolve(args: argparse.Namespace):
                 f"Trained {match[agent_names[0]]} vs {match[agent_names[1]]} ({num_trainings+1}/{args.max_trainings})"
             )
             num_trainings += 1
+            save_evo_metadata(metadata_dir_path, num_trainings)
 
         # evaluate
         logging.info(f"# Start Evaluation (Generation {generation})")

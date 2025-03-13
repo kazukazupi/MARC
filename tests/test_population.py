@@ -45,6 +45,7 @@ def test_population_load():
         agent_name = "test"
         save_path = "tests/temporary"
         pop_size = 10
+        num_survivors = 2
         robot_shape = (5, 5)
 
         population = Population(agent_name, save_path, pop_size, robot_shape)
@@ -71,7 +72,7 @@ def test_population_load():
                 for j in range(pop_size):
                     population.set_score(i, j, random.random())
 
-            population.update(2, 3)
+            population.update(num_survivors, pop_size - num_survivors)
 
     finally:
         shutil.rmtree(save_path)

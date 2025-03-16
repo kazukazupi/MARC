@@ -17,10 +17,10 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--is-continue", action="store_true", help="continue training from a saved model")
 
     # Coevolution Hyperparameters
-    parser.add_argument("--pop-size", type=int, default=10, help="population size")
+    parser.add_argument("--pop-size", type=int, default=25, help="population size")
     parser.add_argument("--max-trainings", type=int, default=250, help="maximum number of trainings")
     parser.add_argument("--robot-shape", type=tuple, default=(5, 5), help="shape of the robot")
-    parser.add_argument("--eval-num-opponents", type=int, default=3, help="number of opponents to evaluate")
+    parser.add_argument("--eval-num-opponents", type=int, default=25, help="number of opponents to evaluate")
 
     # PPO Logging
     parser.add_argument("--log-interval", type=int, default=1, help="interval between logging")
@@ -31,7 +31,7 @@ def get_args() -> argparse.Namespace:
     # PPO Hyperparameters
     parser.add_argument("--delta", type=float, default=0.0, help="delta for self-play opponent sampling")
     parser.add_argument("--gamma", type=float, default=0.99, help="discount factor for rewards")
-    parser.add_argument("--num-updates", type=int, default=500, help="number of updates")
+    parser.add_argument("--num-updates", type=int, default=1000, help="number of updates")
     parser.add_argument("--num-processes", type=int, default=1, help="number of parallel environments")
     parser.add_argument("--num-steps", type=int, default=128, help="number of forward steps in A2C")
     parser.add_argument("--gae-lambda", type=float, default=0.95, help="gae lambda parameter")

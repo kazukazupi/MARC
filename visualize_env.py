@@ -1,22 +1,28 @@
+import argparse
 import random
 
 import cv2  # type: ignore
 import numpy as np
 from evogym import sample_robot  # type: ignore
 
-from envs.sumo_env import SimpleSumoEnvClass
+from envs import make
 
 if __name__ == "__main__":
 
-    seed = 16  # suicide
-    # seed = 67  # collide
-    np.random.seed(seed)
-    random.seed(seed)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--env-name", type=str, default="Sumo-v0")
+    args = parser.parse_args()
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        random.seed(args.seed)
 
     body_1, connections_1 = sample_robot((5, 5))
     body_2, connections_2 = sample_robot((5, 5))
 
-    env = SimpleSumoEnvClass(
+    env = make(
+        args.env_name,
         body_1=body_1,
         body_2=body_2,
         connections_1=connections_1,
@@ -31,7 +37,8 @@ if __name__ == "__main__":
 
     env.close()
 
-    env = SimpleSumoEnvClass(
+    env = make(
+        args.env_name,
         body_1=body_1,
         body_2=body_2,
         connections_1=connections_1,
@@ -40,8 +47,9 @@ if __name__ == "__main__":
     )
     env.reset()
 
-    env.action_space("robot_1").seed(seed)
-    env.action_space("robot_2").seed(seed)
+    if args.seed is not None:
+        env.action_space("robot_1").seed(args.seed)
+        env.action_space("robot_2").seed(args.seed)
 
     cum_reward_1 = 0.0
     cum_reward_2 = 0.0

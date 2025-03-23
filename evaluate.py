@@ -96,3 +96,5 @@ if __name__ == "__main__":
         min_num_episodes=1,
         render_mode="human",
     )
+
+    print(returns)

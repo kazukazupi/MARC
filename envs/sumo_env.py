@@ -9,6 +9,9 @@ from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 class SimpleSumoEnvClass(MultiAgentEvoGymBase):
 
+    ENV_NAME = "Sumo-v0"
+    ADDITIONAL_OBS_DIM = 6
+
     def __init__(
         self,
         body_1: np.ndarray,

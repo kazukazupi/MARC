@@ -15,6 +15,8 @@ from utils import get_agent_names
 class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
 
     VOXEL_SIZE = 0.1
+    ADDITIONAL_OBS_DIM: int
+    ENV_NAME: str
 
     def __init__(
         self,
@@ -56,7 +58,7 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
         return spaces.Box(
             low=-100.0,
             high=100.0,
-            shape=(6 + num_robot_points,),
+            shape=(self.ADDITIONAL_OBS_DIM + num_robot_points,),
             dtype=float,
         )
 

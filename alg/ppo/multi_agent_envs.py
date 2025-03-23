@@ -5,9 +5,8 @@ import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
+from envs import make
 from envs.base import MultiAgentEvoGymBase
-from envs.chase_env import HorizontalChaseEnvClass
-from envs.sumo_env import SimpleSumoEnvClass
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
 
 VecObsDict = ObsDict
@@ -214,13 +213,7 @@ def make_vec_envs(
 ):
 
     def _thunk():
-        if env_name == "Sumo-v0":
-            env = SimpleSumoEnvClass(**env_kwargs)
-        elif env_name == "HorizontalChaser-v0":
-            env = HorizontalChaseEnvClass(**env_kwargs)
-        else:
-            raise ValueError(f"Unknown environment: {env_name}")
-
+        env = make(env_name, **env_kwargs)
         return env
 
     if num_processes != 1:

@@ -1,12 +1,13 @@
 from typing import Any
 
 from envs.base import MultiAgentEvoGymBase
-from envs.push_env import ObjectPushEnvClass
+from envs.push_env import ObjectPushEnvClass, WallPushEnvClass
 from envs.sumo_env import SimpleSumoEnvClass
 
 ENV_CLASSES = [
     SimpleSumoEnvClass,
     ObjectPushEnvClass,
+    WallPushEnvClass,
 ]
 
 

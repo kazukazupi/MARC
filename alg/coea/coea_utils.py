@@ -17,7 +17,7 @@ def get_matches(
     mode: Literal["train", "eval"],
 ) -> List[Dict[str, int]]:
 
-    if mode == "eval":
+    if mode == "eval" and os.path.exists(os.path.join(metadata_dir_path, "eval_match_metadata.json")):
         with open(os.path.join(metadata_dir_path, "eval_match_metadata.json"), "r") as f:
             match_metadata = MatchMetadata(**json.load(f))
         if match_metadata.generation == generation:

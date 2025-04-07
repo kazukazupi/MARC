@@ -12,6 +12,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--env-name", type=str, default="Sumo-v0")
+    parser.add_argument("--mode", choices=["human", "rgb_array"], default="human")
     args = parser.parse_args()
 
     if args.seed is not None:
@@ -43,7 +44,7 @@ if __name__ == "__main__":
         body_2=body_2,
         connections_1=connections_1,
         connections_2=connections_2,
-        render_mode="human",
+        render_mode=args.mode,
     )
     env.reset()
 
@@ -56,6 +57,10 @@ if __name__ == "__main__":
     timestep = 0
 
     while True:
+        if args.mode == "rgb_array":
+            frame = env.render()
+            cv2.imshow("frame", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(1)
         action_1 = env.action_space("robot_1").sample()
         action_2 = env.action_space("robot_2").sample()
         action = {"robot_1": action_1, "robot_2": action_2}

@@ -10,7 +10,7 @@ from alg.coea.structure import Structure
 from alg.ppo import Agent, make_vec_envs
 from analysis.analysis_utils import get_robot_save_path, get_top_robot_ids
 from envs import AgentID
-from utils import get_agent_names
+from utils import get_agent_names, load_args
 
 
 def visualize(
@@ -110,7 +110,8 @@ if __name__ == "__main__":
     #     "robot_2": Structure.from_save_path("./experiments/old/log9/robot_2"),
     # }
 
-    env_name = "Sumo-v0"
+    coea_args = load_args(os.path.join(args.experiment_dir, "metadata"))
+    env_name = coea_args.env_name
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     render_options = {"disable_tracking": True} if args.disable_tracking else None

@@ -3,6 +3,7 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
+import cv2  # type: ignore
 import numpy as np
 import torch
 
@@ -21,6 +22,7 @@ def evaluate(
     seed: Optional[int] = None,
     render_mode: Optional[str] = None,
     render_options: Optional[Dict[str, Any]] = None,
+    movie_path: Optional[str] = None,
 ) -> Dict[str, float]:
 
     agent_names = get_agent_names()
@@ -50,7 +52,22 @@ def evaluate(
     episode_rewards: Dict[str, List[float]] = {a: [] for a in envs.agents}
     observations = envs.reset()
 
+    if render_mode == "rgb_array":
+        fps = 50
+        frame_size = None
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        writer = None
+        assert movie_path is not None, "movie_path must be provided when render_mode is 'rgb_array'"
+
     while len(episode_rewards[envs.agents[0]]) < min_num_episodes:
+
+        if render_mode == "rgb_array":
+            frame = envs.render()
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            if writer is None:
+                frame_size = frame.shape[1], frame.shape[0]
+                writer = cv2.VideoWriter(movie_path, fourcc, fps, frame_size)
+            writer.write(frame)
 
         # set actions
         actions = {}
@@ -71,6 +88,9 @@ def evaluate(
         [len(episode_rewards[a]) == len(episode_rewards[envs.agents[0]]) for a in envs.agents]
     ), "The number of episodes must be equal for all agents."
 
+    if render_mode == "rgb_array" and writer is not None:
+        writer.release()
+
     return {a: float(np.mean(episode_rewards[a])) for a in envs.agents}
 
 
@@ -78,6 +98,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--save-path", type=str, required=True)
+    parser.add_argument("--movie-path", type=str, default=None)
+    parser.add_argument("--min-num-episodes", type=int, default=1)
     args = parser.parse_args()
 
     with open(os.path.join(args.save_path, "env_info.json"), "r") as f:
@@ -93,8 +115,9 @@ if __name__ == "__main__":
         env_name,
         num_processes=1,
         device=torch.device("cpu"),
-        min_num_episodes=1,
-        render_mode="human",
+        min_num_episodes=args.min_num_episodes,
+        render_mode="human" if args.movie_path is None else "rgb_array",
+        movie_path=args.movie_path,
     )
 
     print(returns)

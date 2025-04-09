@@ -2,12 +2,14 @@ from typing import Any
 
 from envs.base import MultiAgentEvoGymBase
 from envs.chase_env import SimpleChaseEnvClass
+from envs.chimney_env import ChimneyClashEnvClass
 from envs.ojama_env import OjamaDepth3EnvClass, OjamaDepth4EnvClass, OjamaDepth5EnvClass
 from envs.push_env import AboveObjectPushEnvClass, ObjectPushEnvClass, WallPushEnvClass
 from envs.sumo_env import SimpleSumoEnvClass
 
 ENV_CLASSES = [
     AboveObjectPushEnvClass,
+    ChimneyClashEnvClass,
     SimpleChaseEnvClass,
     SimpleSumoEnvClass,
     ObjectPushEnvClass,

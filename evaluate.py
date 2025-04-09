@@ -91,6 +91,9 @@ def evaluate(
     if render_mode == "rgb_array" and writer is not None:
         writer.release()
 
+    if "fitness" in infos[agent_names[0]][0]:
+        return {a: infos[a][0]["fitness"] for a in envs.agents}
+
     return {a: float(np.mean(episode_rewards[a])) for a in envs.agents}
 
 

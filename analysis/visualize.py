@@ -81,6 +81,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment-dir", type=str, required=True)
     parser.add_argument("--generations", type=int, nargs="+")
+    parser.add_argument("--id", type=int, nargs="+")
     parser.add_argument("--render-mode", choices=["human", "rgb_array"], default="human")
     parser.add_argument("--disable-tracking", action="store_true", help="Disable tracking")
     parser.add_argument("--video-path", type=str, default="output.mp4")
@@ -97,10 +98,16 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid number of generations.")
 
+    if args.id is not None:
+        assert len(args.id) == len(get_agent_names()), "The number of ids must match the number of agents."
+
     structures = {}
-    for a, generation in zip(get_agent_names(), args.generations):
+    for i, (a, generation) in enumerate(zip(get_agent_names(), args.generations)):
         csv_path = os.path.join(args.experiment_dir, a, "fitnesses.csv")
-        id_ = get_top_robot_ids(csv_path, generation=generation)[0]
+        if args.id is None:
+            id_ = get_top_robot_ids(csv_path, generation=generation)[0]
+        else:
+            id_ = args.id[i]
         save_path = get_robot_save_path(os.path.join(args.experiment_dir, a), id_, generation)
         print(f"Loading {save_path}")
         structures[a] = Structure.from_save_path(save_path)

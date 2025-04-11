@@ -76,8 +76,8 @@ class OjamaDepth4EnvClass(MultiAgentEvoGymBase):
             rewards[self.agents[1]] -= self.COMPLETION_REWARD
         elif is_unstable:
             print("SIMULATION UNSTABLE ... TERMINATING")
-            rewards[self.agents[0]] -= self.COMPLETION_REWARD
-            rewards[self.agents[1]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[0]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[1]] -= self.COMPLETION_REWARD
         else:
             terminations = {a: False for a in self.agents}
 
@@ -223,8 +223,8 @@ class OjamaDepth3EnvClass(MultiAgentEvoGymBase):
             rewards[self.agents[1]] -= self.COMPLETION_REWARD
         elif is_unstable:
             print("SIMULATION UNSTABLE ... TERMINATING")
-            rewards[self.agents[0]] -= self.COMPLETION_REWARD
-            rewards[self.agents[1]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[0]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[1]] -= self.COMPLETION_REWARD
         else:
             terminations = {a: False for a in self.agents}
 
@@ -299,7 +299,7 @@ class OjamaDepth3EnvClass(MultiAgentEvoGymBase):
         }
 
         return observations
-    
+
 
 class OjamaDepth5EnvClass(MultiAgentEvoGymBase):
 
@@ -370,8 +370,8 @@ class OjamaDepth5EnvClass(MultiAgentEvoGymBase):
             rewards[self.agents[1]] -= self.COMPLETION_REWARD
         elif is_unstable:
             print("SIMULATION UNSTABLE ... TERMINATING")
-            rewards[self.agents[0]] -= self.COMPLETION_REWARD
-            rewards[self.agents[1]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[0]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[1]] -= self.COMPLETION_REWARD
         else:
             terminations = {a: False for a in self.agents}
 

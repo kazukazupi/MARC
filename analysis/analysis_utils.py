@@ -5,6 +5,16 @@ import pandas as pd  # type: ignore
 
 
 def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] = None) -> List[int]:
+    """
+    Returns the indices of the top N robots based on their scores from a CSV file.
+    Args:
+        csv_path (str): Path to the CSV file containing robot scores. The CSV should have a 'generation' column and columns for each robot.
+        top_n (int, optional): Number of top robots to select. Defaults to 1.
+        generation (Optional[int], optional): The generation to filter by. If None, uses the latest generation in the CSV. Defaults to None.
+    Returns:
+        List[int]: List of column indices corresponding to the top N robots in the specified generation.
+    """
+
     df = pd.read_csv(csv_path)
     if generation is None:
         generation = df["generation"].max()
@@ -17,6 +27,18 @@ def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] =
 
 
 def get_robot_save_path(population_path: str, robot_id: int, generation: Optional[int] = None) -> str:
+    """
+    Returns the file path of the robot specified by robot_id and generation within a population directory.
+    Args:
+        population_path (str): The root directory path containing generations of robot data.
+        robot_id (int): The unique identifier of the robot.
+        generation (Optional[int], optional): The generation number to search in. If None, searches in the latest generation.
+    Returns:
+        str: The file path to the robot's directory.
+    Raises:
+        FileNotFoundError: If the robot's directory cannot be found in any generation.
+    """
+
     if generation is None:
         generation = get_max_generation(population_path)
 
@@ -29,8 +51,17 @@ def get_robot_save_path(population_path: str, robot_id: int, generation: Optiona
             raise FileNotFoundError(f"Robot {robot_id} not found in {population_path}")
 
 
-def get_max_generation(path: str):
+def get_max_generation(population_path: str) -> int:
+    """
+    Returns the maximum generation number found in the specified directory.
+
+    Args:
+        population_path (str): The root directory path containing generations of robot data.
+    Returns:
+        int: The maximum generation number found.
+    """
+
     generation = 0
-    while os.path.exists(os.path.join(path, f"generation{generation+1:02}")):
+    while os.path.exists(os.path.join(population_path, f"generation{generation+1:02}")):
         generation += 1
     return generation

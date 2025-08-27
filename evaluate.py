@@ -61,6 +61,7 @@ def evaluate(
 
     while len(episode_rewards[envs.agents[0]]) < min_num_episodes:
 
+        # render
         if render_mode == "rgb_array":
             frame = envs.render()
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -79,6 +80,7 @@ def evaluate(
         # step
         observations, _, _, infos = envs.step(actions)
 
+        # reward
         for a, info in infos.items():
             for env_idx in range(num_processes):
                 if "episode" in info[env_idx]:

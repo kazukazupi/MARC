@@ -55,7 +55,7 @@ def evaluate(
     if render_mode == "rgb_array":
         fps = 50
         frame_size = None
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore
         writer = None
         assert movie_path is not None, "movie_path must be provided when render_mode is 'rgb_array'"
 
@@ -67,6 +67,7 @@ def evaluate(
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             if writer is None:
                 frame_size = frame.shape[1], frame.shape[0]
+                assert movie_path is not None
                 writer = cv2.VideoWriter(movie_path, fourcc, fps, frame_size)
             writer.write(frame)
 

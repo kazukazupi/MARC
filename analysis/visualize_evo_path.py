@@ -83,8 +83,8 @@ def concatenate(experiment_dir: str, generations: List[int]):
 
     # Video config
     fps = 50
-    frame_size = None
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    frame_size = (0, 0)
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore
     writer = None
     tiled_video_path = os.path.join("analysis", "movies", env_name, f"{os.path.basename(experiment_dir)}_tiled.mp4")
     print(f"Creating tiled video: {tiled_video_path}")
@@ -94,7 +94,7 @@ def concatenate(experiment_dir: str, generations: List[int]):
         video_path_list = sorted(glob.glob(os.path.join(video_dir, f"*_gen{generation}_top*.mp4")))
 
         # Find minimum n frames across videos
-        min_n_frames = float("inf")
+        min_n_frames = 10**8
         for video_path in video_path_list:
             cap = cv2.VideoCapture(video_path)
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

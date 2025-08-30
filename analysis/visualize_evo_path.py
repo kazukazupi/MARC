@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 
 from alg.coea.structure import Structure
-from analysis.analysis_utils import get_robot_save_path, get_top_robot_ids
+from analysis.analysis_utils import get_env_name, get_max_generation, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
 from utils import load_args
 
@@ -27,9 +27,7 @@ def write(experiment_dir: str, generations: List[int]):
         generations (List[int]): List of generation numbers for which to generate evaluation videos.
     """
 
-    # Load env name
-    coea_args = load_args(os.path.join(experiment_dir, "metadata"))
-    env_name = coea_args.env_name
+    env_name = get_env_name(experiment_dir)
 
     csv_path_1 = os.path.join(experiment_dir, "robot_1", "fitnesses.csv")
     csv_path_2 = os.path.join(experiment_dir, "robot_2", "fitnesses.csv")
@@ -75,9 +73,7 @@ def concatenate(experiment_dir: str, generations: List[int]):
         generations (List[int]): List of generation numbers for which to generate tiled videos.
     """
 
-    # Load env name
-    coea_args = load_args(os.path.join(experiment_dir, "metadata"))
-    env_name = coea_args.env_name
+    env_name = get_env_name(experiment_dir)
 
     video_dir = os.path.join("analysis", "movies", env_name, "evolution_path")
 

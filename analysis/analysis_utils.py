@@ -3,6 +3,14 @@ from typing import List, Optional
 
 import pandas as pd  # type: ignore
 
+from utils import load_args
+
+
+def get_env_name(experiment_dir: str) -> str:
+    coea_args = load_args(os.path.join(experiment_dir, "metadata"))
+    env_name = coea_args.env_name
+    return env_name
+
 
 def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] = None) -> List[int]:
     """

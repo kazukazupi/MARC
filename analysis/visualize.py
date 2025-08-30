@@ -4,9 +4,9 @@ import os
 import torch
 
 from alg.coea.structure import Structure
-from analysis.analysis_utils import get_robot_save_path, get_top_robot_ids
+from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
-from utils import get_agent_names, load_args
+from utils import get_agent_names
 
 if __name__ == "__main__":
 
@@ -59,9 +59,7 @@ if __name__ == "__main__":
         print(f"Loading {save_path}")
         structures[a] = Structure.from_save_path(save_path)
 
-    # Load env name
-    coea_args = load_args(os.path.join(args.experiment_dir, "metadata"))
-    env_name = coea_args.env_name
+    env_name = get_env_name(args.experiment_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # visualize

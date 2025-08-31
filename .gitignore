@@ -12,4 +12,6 @@ __pycache__
 *.npy
 *.zip
 *.out
+*.txt
+legacy/*
 neat-checkpoint-*

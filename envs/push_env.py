@@ -87,7 +87,7 @@ class ObjectPushEnvClass(PackageBase):
 
     VIEWER_DEFAULT_POS = (17.5, 4)
 
-    HIGHT_THRESH = 1.02 * MultiAgentEvoGymBase.VOXEL_SIZE
+    HEIGHT_THRESH = 1.02 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 1.0
 
     def get_rewards(
@@ -149,13 +149,13 @@ class ObjectPushEnvClass(PackageBase):
         # judge termination
         terminations = {a: True for a in self.agents}
 
-        if min_heights[0] < self.HIGHT_THRESH and min_heights[1] < self.HIGHT_THRESH:
+        if min_heights[0] < self.HEIGHT_THRESH and min_heights[1] < self.HEIGHT_THRESH:
             for a in self.agents:
                 rewards[a] -= self.COMPLETION_REWARD
-        elif min_heights[0] < self.HIGHT_THRESH:
+        elif min_heights[0] < self.HEIGHT_THRESH:
             rewards[self.agents[0]] -= self.COMPLETION_REWARD
             rewards[self.agents[1]] += self.COMPLETION_REWARD
-        elif min_heights[1] < self.HIGHT_THRESH:
+        elif min_heights[1] < self.HEIGHT_THRESH:
             rewards[self.agents[0]] += self.COMPLETION_REWARD
             rewards[self.agents[1]] -= self.COMPLETION_REWARD
         elif is_unstable:

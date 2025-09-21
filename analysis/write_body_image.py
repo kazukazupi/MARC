@@ -96,8 +96,8 @@ def get_best_robot_images(experiment_dir: str, generations: Optional[List[int]] 
             img_1 = get_image(body_1)
             img_2 = get_image(body_2)
 
-            cv2.imwrite(os.path.join(output_dir_1, f"generation{generation}_top{i+1}.png"), img_1)
-            cv2.imwrite(os.path.join(output_dir_2, f"generation{generation}_top{i+1}.png"), img_2)
+            cv2.imwrite(os.path.join(output_dir_1, f"generation{generation}_top{i+1}_id{robot_id_1}.png"), img_1)
+            cv2.imwrite(os.path.join(output_dir_2, f"generation{generation}_top{i+1}_id{robot_id_2}.png"), img_2)
 
 
 if __name__ == "__main__":

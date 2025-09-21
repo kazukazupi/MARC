@@ -62,6 +62,9 @@ if __name__ == "__main__":
     env_name = get_env_name(args.experiment_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    if args.movie_path is not None:
+        os.makedirs(os.path.dirname(args.movie_path), exist_ok=True)
+
     # visualize
     evaluate(
         structures,

@@ -1,10 +1,11 @@
 import argparse
 import os
+from typing import List, Optional
 
 import cv2
 import numpy as np
 
-from analysis.analysis_utils import *
+from analysis.analysis_utils import get_env_name, get_max_generation, get_robot_save_path, get_top_robot_ids
 
 
 def color(val: int) -> tuple[int, int, int]:

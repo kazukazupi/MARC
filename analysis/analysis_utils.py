@@ -16,9 +16,11 @@ def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] =
     """
     Returns the indices of the top N robots based on their scores from a CSV file.
     Args:
-        csv_path (str): Path to the CSV file containing robot scores. The CSV should have a 'generation' column and columns for each robot.
+        csv_path (str): Path to the CSV file containing robot scores.
+                        The CSV should have a 'generation' column and columns for each robot.
         top_n (int, optional): Number of top robots to select. Defaults to 1.
-        generation (Optional[int], optional): The generation to filter by. If None, uses the latest generation in the CSV. Defaults to None.
+        generation (Optional[int], optional): The generation to filter by.
+                                              If None, uses the latest generation in the CSV. Defaults to None.
     Returns:
         List[int]: List of column indices corresponding to the top N robots in the specified generation.
     """
@@ -40,7 +42,8 @@ def get_robot_save_path(population_path: str, robot_id: int, generation: Optiona
     Args:
         population_path (str): The root directory path containing generations of robot data.
         robot_id (int): The unique identifier of the robot.
-        generation (Optional[int], optional): The generation number to search in. If None, searches in the latest generation.
+        generation (Optional[int], optional): The generation number to search in.
+                                              If None, searches in the latest generation.
     Returns:
         str: The file path to the robot's directory.
     Raises:

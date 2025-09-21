@@ -9,9 +9,8 @@ import torch
 from tqdm import tqdm
 
 from alg.coea.structure import Structure
-from analysis.analysis_utils import get_env_name, get_max_generation, get_robot_save_path, get_top_robot_ids
+from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
-from utils import load_args
 
 
 def write(experiment_dir: str, generations: List[int]):
@@ -66,7 +65,8 @@ def write(experiment_dir: str, generations: List[int]):
 
 def concatenate(experiment_dir: str, generations: List[int]):
     """
-    Concatenates individual evaluation videos of top-performing robots into a single tiled video for each specified generation.
+    Concatenates individual evaluation videos of top-performing robots
+    into a single tiled video for each specified generation.
 
     Args:
         experiment_dir (str): Path to the experiment directory containing robot data and metadata.

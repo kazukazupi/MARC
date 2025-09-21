@@ -11,6 +11,15 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "Sumo-v0"
     ADDITIONAL_OBS_DIM = 6
+    ENV_FILE_NAME = "sumo_env.json"
+    ROBOT1_INIT_POS = (8, 3)
+    ROBOT2_INIT_POS = (22, 3)
+
+    VIEWER_DEFAULT_POS = (17.5, 4)
+
+    COLLIDE_THRESH = 0.1 * MultiAgentEvoGymBase.VOXEL_SIZE
+    HEIGHT_THRESH = 1.02 * MultiAgentEvoGymBase.VOXEL_SIZE
+    COMPLETION_REWARD = 1.0
 
     def __init__(
         self,
@@ -23,30 +32,15 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
     ):
 
         self.collide = False
-        self.collide_thresh = 0.1 * self.VOXEL_SIZE
-        self.height_thresh = 1.02 * self.VOXEL_SIZE
-        self.completion_reward = 1.0
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "sumo_env.json"
-        x_positions = [8, 27 - body_2.shape[1]]
-        y_positions = [3, 3]
 
         super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
+            body_1=body_1,
+            body_2=body_2,
+            connections_1=connections_1,
+            connections_2=connections_2,
+            render_mode=render_mode,
+            render_options=render_options,
         )
-
-        if render_options is not None and render_options["disable_tracking"]:
-            # TODO: ウィンドウサイズも設定する
-            self.default_viewer.set_pos((17.5, 4))
-        else:
-            self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
@@ -79,24 +73,24 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
         # detect collision
         if not self.collide:
             distance = np.min(robot_pos_final[1][0]) - np.max(robot_pos_final[0][0])
-            if distance < self.collide_thresh:
+            if distance < self.COLLIDE_THRESH:
                 self.collide = True
 
-        if min_heights[0] < self.height_thresh and min_heights[1] < self.height_thresh:
+        if min_heights[0] < self.HEIGHT_THRESH and min_heights[1] < self.HEIGHT_THRESH:
             for a in self.agents:
-                rewards[a] -= self.completion_reward
-        elif min_heights[0] < self.height_thresh:
-            rewards[self.agents[0]] -= self.completion_reward
+                rewards[a] -= self.COMPLETION_REWARD
+        elif min_heights[0] < self.HEIGHT_THRESH:
+            rewards[self.agents[0]] -= self.COMPLETION_REWARD
             if self.collide:
-                rewards[self.agents[1]] += self.completion_reward
-        elif min_heights[1] < self.height_thresh:
+                rewards[self.agents[1]] += self.COMPLETION_REWARD
+        elif min_heights[1] < self.HEIGHT_THRESH:
             if self.collide:
-                rewards[self.agents[0]] += self.completion_reward
-            rewards[self.agents[1]] -= self.completion_reward
+                rewards[self.agents[0]] += self.COMPLETION_REWARD
+            rewards[self.agents[1]] -= self.COMPLETION_REWARD
         elif is_unstable:
             print("SIMULATION UNSTABLE... TERMINATING")
             for a in self.agents:
-                rewards[a] -= self.completion_reward
+                rewards[a] -= self.COMPLETION_REWARD
         else:
             terminations = {a: False for a in self.agents}
 
@@ -119,6 +113,7 @@ class SimpleSumoEnvClass(MultiAgentEvoGymBase):
 
     def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
 
+        self.collide = False
         self.agents = copy(self.possible_agents)
         self.timestep = 0
 

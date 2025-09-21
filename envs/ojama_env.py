@@ -11,36 +11,12 @@ class OjamaDepth4EnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "Ojama-d4"
     ADDITIONAL_OBS_DIM = 17
+    ENV_FILE_NAME = "Ojama-depth-4.json"
+    ROBOT1_INIT_POS = (8, 6)
+    ROBOT2_INIT_POS = (15, 2)
+
     X_THRESH = 21 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 3.0
-
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "Ojama-depth-4.json"
-        x_positions = [8, 15]
-        y_positions = [6, 2]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, actions: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
@@ -158,36 +134,11 @@ class OjamaDepth3EnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "Ojama-d3"
     ADDITIONAL_OBS_DIM = 17
+    ENV_FILE_NAME = "Ojama-depth-3.json"
+    ROBOT1_INIT_POS = (8, 6)
+    ROBOT2_INIT_POS = (15, 3)
     X_THRESH = 21 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 3.0
-
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "Ojama-depth-3.json"
-        x_positions = [8, 15]
-        y_positions = [6, 3]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, actions: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 
@@ -305,36 +256,12 @@ class OjamaDepth5EnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "Ojama-d5"
     ADDITIONAL_OBS_DIM = 17
+    ENV_FILE_NAME = "Ojama-depth-5.json"
+    ROBOT1_INIT_POS = (8, 6)
+    ROBOT2_INIT_POS = (15, 1)
+
     X_THRESH = 21 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 3.0
-
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "Ojama-depth-5.json"
-        x_positions = [8, 15]
-        y_positions = [6, 1]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, actions: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
 

@@ -11,6 +11,12 @@ class ChimneyClashEnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "ChimneyClash"
     ADDITIONAL_OBS_DIM = 4
+    ENV_FILE_NAME = "ChimneyClash.json"
+    ROBOT1_INIT_POS = (7, 1)
+    ROBOT2_INIT_POS = (9, 7)
+
+    VIEWER_DEFAULT_POS = (17.5, 4)
+
     Y_THRESH = 6 * MultiAgentEvoGymBase.VOXEL_SIZE
     Y_THRESH_REWARD = 8 * MultiAgentEvoGymBase.VOXEL_SIZE
 
@@ -24,27 +30,14 @@ class ChimneyClashEnvClass(MultiAgentEvoGymBase):
         render_options: Optional[Dict[str, Any]] = None,
     ):
 
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "ChimneyClash.json"
-        x_positions = [7, 9]
-        y_positions = [1, 7]
-
         super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
+            body_1=body_1,
+            body_2=body_2,
+            connections_1=connections_1,
+            connections_2=connections_2,
+            render_mode=render_mode,
+            render_options=render_options,
         )
-
-        if render_options is not None and render_options["disable_tracking"]:
-            # TODO: ウィンドウサイズも設定する
-            self.default_viewer.set_pos((17.5, 4))
-        else:
-            self.default_viewer.track_objects(*self.possible_agents)
 
         self.robot2_max_com_y: Optional[float] = None
         self.robot2_min_com_y: Optional[float] = None

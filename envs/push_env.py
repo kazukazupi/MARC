@@ -81,40 +81,14 @@ class PackageBase(MultiAgentEvoGymBase):
 class ObjectPushEnvClass(PackageBase):
 
     ENV_NAME = "MultiPusher-v0"
+    ENV_FILE_NAME = "push_env.json"
+    ROBOT1_INIT_POS = (8, 3)
+    ROBOT2_INIT_POS = (22, 3)
+
+    VIEWER_DEFAULT_POS = (17.5, 4)
+
     HIGHT_THRESH = 1.02 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 1.0
-
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "push_env.json"
-        x_positions = [8, 27 - body_2.shape[1]]
-        y_positions = [3, 3]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        if render_options is not None and render_options["disable_tracking"]:
-            # TODO: ウィンドウサイズも設定する
-            self.default_viewer.set_pos((17.5, 4))
-        else:
-            self.default_viewer.track_objects(*self.possible_agents)
 
     def get_rewards(
         self,
@@ -212,41 +186,14 @@ class ObjectPushEnvClass(PackageBase):
 class AboveObjectPushEnvClass(PackageBase):
 
     ENV_NAME = "MultiPusher-v2"
+    ENV_FILE_NAME = "MultiPusher-v2.json"
+    ROBOT1_INIT_POS = (7, 1)
+    ROBOT2_INIT_POS = (19, 1)
     X_THRESH_1 = 14 * MultiAgentEvoGymBase.VOXEL_SIZE
     X_THRESH_2 = 17 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 1.0
 
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "MultiPusher-v2.json"
-        x_positions = [7, 19]
-        y_positions = [1, 1]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        if render_options is not None and render_options["disable_tracking"]:
-            # TODO: ウィンドウサイズも設定する
-            self.default_viewer.set_pos((17.5, 4))
-        else:
-            self.default_viewer.track_objects(*self.possible_agents)
+    VIEWER_DEFAULT_POS = (17.5, 4)
 
     def get_rewards(
         self,
@@ -463,41 +410,15 @@ class AboveObjectPushEnvClass(PackageBase):
 class WallPushEnvClass(PackageBase):
 
     ENV_NAME = "WallPusher-v0"
+    ENV_FILE_NAME = "WallPusher-v0.json"
+    ROBOT1_INIT_POS = (19, 1)
+    ROBOT2_INIT_POS = (27, 1)
+
+    VIEWER_DEFAULT_POS = (17.5, 4)
+
     LEFT_THRESH = 1 * MultiAgentEvoGymBase.VOXEL_SIZE
     RIGHT_THRESH = 50 * MultiAgentEvoGymBase.VOXEL_SIZE
     COMPLETION_REWARD = 1.0
-
-    def __init__(
-        self,
-        body_1: np.ndarray,
-        body_2: np.ndarray,
-        connections_1: Optional[np.ndarray] = None,
-        connections_2: Optional[np.ndarray] = None,
-        render_mode: Optional[str] = None,
-        render_options: Optional[Dict[str, Any]] = None,
-    ):
-
-        body_list = [body_1, body_2]
-        connections_list = [connections_1, connections_2]
-        env_file_name = "WallPusher-v0.json"
-        x_positions = [19, 27]
-        y_positions = [1, 1]
-
-        super().__init__(
-            body_list,
-            connections_list,
-            env_file_name,
-            render_mode,
-            render_options,
-            x_positions,
-            y_positions,
-        )
-
-        if render_options is not None and render_options["disable_tracking"]:
-            #   TODO: ウィンドウサイズも設定する
-            self.default_viewer.set_pos((17.5, 4))
-        else:
-            self.default_viewer.track_objects(*self.possible_agents)
 
     def get_rewards(
         self,

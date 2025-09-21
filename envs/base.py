@@ -15,18 +15,23 @@ from utils import get_agent_names
 class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
 
     VOXEL_SIZE = 0.1
-    ADDITIONAL_OBS_DIM: int
+
     ENV_NAME: str
+    ADDITIONAL_OBS_DIM: int
+    ENV_FILE_NAME: str
+    ROBOT1_INIT_POS: Tuple[int, int]
+    ROBOT2_INIT_POS: Tuple[int, int]
+
+    VIEWER_DEFAULT_POS: Tuple[float, float]
 
     def __init__(
         self,
-        body_list: List[np.ndarray],
-        connections_list: List[Optional[np.ndarray]],
-        env_file_name: str,
-        render_mode: Optional[str],
-        render_options: Optional[dict],
-        x_positions: List[int],
-        y_positions: List[int],
+        body_1: np.ndarray,
+        body_2: np.ndarray,
+        connections_1: Optional[np.ndarray] = None,
+        connections_2: Optional[np.ndarray] = None,
+        render_mode: Optional[str] = None,
+        render_options: Optional[Dict[str, Any]] = None,
     ):
 
         self.possible_agents = get_agent_names()
@@ -34,15 +39,33 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
         self.timestep: Optional[int] = None
 
         # make world
-        self.world = EvoWorld.from_json(os.path.join("world_data", env_file_name))
+        self.world = EvoWorld.from_json(os.path.join("world_data", self.ENV_FILE_NAME))
 
-        for agent, body, connections, x, y in zip(
-            self.possible_agents, body_list, connections_list, x_positions, y_positions
-        ):
+        # add robot1 to world
+        self.world.add_from_array(
+            self.possible_agents[0],
+            body_1,
+            self.ROBOT1_INIT_POS[0],
+            self.ROBOT1_INIT_POS[1],
+            connections=connections_1,
+        )
 
-            self.world.add_from_array(agent, body, x, y, connections=connections)
+        # add robot2 to world
+        self.world.add_from_array(
+            self.possible_agents[1],
+            body_2,
+            self.ROBOT2_INIT_POS[0],
+            self.ROBOT2_INIT_POS[1],
+            connections=connections_2,
+        )
 
         EvoGymBase.__init__(self, self.world, render_mode, render_options)
+
+        # viewer setup
+        if render_options is not None and render_options["disable_tracking"]:
+            self.default_viewer.set_pos(self.VIEWER_DEFAULT_POS)
+        else:
+            self.default_viewer.track_objects(*self.possible_agents)
 
     def step(self, action: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
         raise NotImplementedError

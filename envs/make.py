@@ -2,8 +2,8 @@ from typing import Any
 
 from envs.base import MultiAgentEvoGymBase
 from envs.chimney_env import ChimneyClashEnvClass
-from envs.ojama_env import OjamaDepth3EnvClass, OjamaDepth4EnvClass, OjamaDepth5EnvClass
-from envs.push_env import AboveObjectPushEnvClass, ObjectPushEnvClass, WallPushEnvClass
+from envs.ojama_env import OjamaDepth4EnvClass
+from envs.push_env import AboveObjectPushEnvClass, ObjectPushEnvClass
 from envs.sumo_env import SimpleSumoEnvClass
 
 ENV_CLASSES = [
@@ -11,10 +11,7 @@ ENV_CLASSES = [
     ChimneyClashEnvClass,
     SimpleSumoEnvClass,
     ObjectPushEnvClass,
-    OjamaDepth3EnvClass,
     OjamaDepth4EnvClass,
-    OjamaDepth5EnvClass,
-    WallPushEnvClass,
 ]
 
 

@@ -7,7 +7,7 @@ from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
-class OjamaDepth4EnvClass(MultiAgentEvoGymBase):
+class PassAndBlockEnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "PassAndBlock-v0"
     ADDITIONAL_OBS_DIM = 17

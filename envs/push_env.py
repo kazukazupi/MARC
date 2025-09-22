@@ -78,7 +78,7 @@ class PackageBase(MultiAgentEvoGymBase):
         return obs, infos
 
 
-class ObjectPushEnvClass(PackageBase):
+class BoxPushEnvClass(PackageBase):
 
     ENV_NAME = "BoxPush-v0"
     ROBOT1_INIT_POS = (8, 3)
@@ -182,7 +182,7 @@ class ObjectPushEnvClass(PackageBase):
         return observations, rewards, terminations, truncations, infos
 
 
-class AboveObjectPushEnvClass(PackageBase):
+class AboveBoxPushEnvClass(PackageBase):
 
     ENV_NAME = "AboveBoxPush-v0"
     ROBOT1_INIT_POS = (7, 1)

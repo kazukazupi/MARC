@@ -1,0 +1,129 @@
+from copy import copy
+from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
+
+from envs.base import MultiAgentEvoGymBase
+from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
+
+
+class PassAndBlockEnvClass(MultiAgentEvoGymBase):
+
+    ENV_NAME = "PassAndBlock-v0"
+    ADDITIONAL_OBS_DIM = 17
+    ROBOT1_INIT_POS = (8, 6)
+    ROBOT2_INIT_POS = (15, 2)
+
+    X_THRESH = 21 * MultiAgentEvoGymBase.VOXEL_SIZE
+    COMPLETION_REWARD = 3.0
+
+    def step(self, actions: ActionDict) -> Tuple[ObsDict, RewardDict, BoolDict, BoolDict, InfoDict]:
+
+        robot_pos_init = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
+        robot_com_pos_init = [np.mean(pos, 1) for pos in robot_pos_init]
+        robot_2_min_pos_init = np.min(robot_pos_init[1], axis=1)
+        robot_2_max_pos_init = np.max(robot_pos_init[1], axis=1)
+
+        assert self.timestep is not None, "Timestep is None. Did you call reset()?"
+
+        is_unstable = super(MultiAgentEvoGymBase, self).step(actions)
+
+        robot_pos_final = [self.object_pos_at_time(self.get_time(), obj) for obj in self.agents]
+        robot_com_pos_final = [np.mean(pos, 1) for pos in robot_pos_final]
+        robot_2_min_pos_final = np.min(robot_pos_final[1], axis=1)
+        robot_2_max_pos_final = np.max(robot_pos_final[1], axis=1)
+
+        span_final = robot_2_max_pos_final[1] - robot_2_min_pos_final[1]
+        span_init = robot_2_max_pos_init[1] - robot_2_min_pos_init[1]
+
+        rewards = {a: 0.0 for a in self.agents}
+
+        rewards[self.agents[0]] += robot_com_pos_final[0][0] - robot_com_pos_init[0][0]
+        rewards[self.agents[1]] += span_final - span_init
+        # rewards[self.agents[1]] += robot_com_pos_final[1][1] - robot_com_pos_init[1][1]
+        # rewards[self.agents[1]] += np.max(robot_pos_final[1], axis=1)[1] - np.max(robot_pos_init[1], axis=1)[1]
+        # rewards[self.agents[1]] -= abs(robot_com_pos_final[1][0] - robot_com_pos_init[1][0]) * 0.5
+
+        terminations = {a: True for a in self.agents}
+
+        if np.min(robot_pos_final[0], axis=1)[0] >= self.X_THRESH:
+            rewards[self.agents[0]] += self.COMPLETION_REWARD
+            rewards[self.agents[1]] -= self.COMPLETION_REWARD
+        elif is_unstable:
+            print("SIMULATION UNSTABLE ... TERMINATING")
+            # rewards[self.agents[0]] -= self.COMPLETION_REWARD
+            # rewards[self.agents[1]] -= self.COMPLETION_REWARD
+        else:
+            terminations = {a: False for a in self.agents}
+
+        if self.timestep >= 600:
+            truncations = {a: True for a in self.agents}
+        else:
+            truncations = {a: False for a in self.agents}
+        self.timestep += 1
+
+        observations = self.calc_obs()
+        infos: InfoDict = {a: {} for a in self.agents}
+
+        if all(terminations.values()) or all(truncations.values()):
+            self.agents = []
+
+        return observations, rewards, terminations, truncations, infos
+
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> Tuple[ObsDict, InfoDict]:
+
+        self.agents = copy(self.possible_agents)
+        self.timestep = 0
+
+        super(MultiAgentEvoGymBase, self).reset(seed=seed, options=options)
+        obs = self.calc_obs()
+        infos: InfoDict = {a: {} for a in self.agents}
+
+        return obs, infos
+
+    def calc_obs(self) -> ObsDict:
+
+        robot_com_pos = [self.get_pos_com_obs(a) for a in self.agents]
+        x_distance = robot_com_pos[0][0] - robot_com_pos[1][0]
+        y_distance = robot_com_pos[0][1] - robot_com_pos[1][1]
+
+        robot_orientations = [self.object_orientation_at_time(self.get_time(), a) for a in self.agents]
+
+        obs1 = np.concatenate(
+            (
+                np.array(
+                    [
+                        x_distance,
+                        y_distance,
+                        robot_orientations[0],
+                        robot_orientations[1],
+                    ]
+                ),
+                self.get_vel_com_obs(self.agents[0]),
+                self.get_relative_pos_obs(self.agents[0]),
+                self.get_floor_obs(self.agents[0], ["ground", self.agents[1]], 5),
+            )
+        )
+
+        obs2 = np.concatenate(
+            (
+                np.array(
+                    [
+                        x_distance,
+                        y_distance,
+                        robot_orientations[0],
+                        robot_orientations[1],
+                    ]
+                ),
+                self.get_vel_com_obs(self.agents[1]),
+                self.get_relative_pos_obs(self.agents[1]),
+                self.get_floor_obs(self.agents[1], ["ground"], 5),
+            )
+        )
+
+        observations = {
+            self.agents[0]: obs1,
+            self.agents[1]: obs2,
+        }
+
+        return observations

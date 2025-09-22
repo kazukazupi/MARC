@@ -7,11 +7,10 @@ from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 
-class SimpleSumoEnvClass(MultiAgentEvoGymBase):
+class SumoEnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "Sumo-v0"
     ADDITIONAL_OBS_DIM = 6
-    ENV_FILE_NAME = "sumo_env.json"
     ROBOT1_INIT_POS = (8, 3)
     ROBOT2_INIT_POS = (22, 3)
 

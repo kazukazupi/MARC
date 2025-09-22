@@ -1,20 +1,17 @@
-from typing import Any
+from typing import Any, List
 
 from envs.base import MultiAgentEvoGymBase
-from envs.chimney_env import ChimneyClashEnvClass
-from envs.ojama_env import OjamaDepth3EnvClass, OjamaDepth4EnvClass, OjamaDepth5EnvClass
-from envs.push_env import AboveObjectPushEnvClass, ObjectPushEnvClass, WallPushEnvClass
-from envs.sumo_env import SimpleSumoEnvClass
+from envs.box_push import AboveBoxPushEnvClass, BoxPushEnvClass
+from envs.chimney_clash import ChimneyClashEnvClass
+from envs.pass_and_block import PassAndBlockEnvClass
+from envs.sumo import SumoEnvClass
 
-ENV_CLASSES = [
-    AboveObjectPushEnvClass,
+ENV_CLASSES: List[type[MultiAgentEvoGymBase]] = [
+    SumoEnvClass,
+    BoxPushEnvClass,
+    AboveBoxPushEnvClass,
+    PassAndBlockEnvClass,
     ChimneyClashEnvClass,
-    SimpleSumoEnvClass,
-    ObjectPushEnvClass,
-    OjamaDepth3EnvClass,
-    OjamaDepth4EnvClass,
-    OjamaDepth5EnvClass,
-    WallPushEnvClass,
 ]
 
 

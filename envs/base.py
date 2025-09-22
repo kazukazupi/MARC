@@ -18,7 +18,6 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
 
     ENV_NAME: str
     ADDITIONAL_OBS_DIM: int
-    ENV_FILE_NAME: str
     ROBOT1_INIT_POS: Tuple[int, int]
     ROBOT2_INIT_POS: Tuple[int, int]
 
@@ -39,7 +38,7 @@ class MultiAgentEvoGymBase(EvoGymBase, ParallelEnv):
         self.timestep: Optional[int] = None
 
         # make world
-        self.world = EvoWorld.from_json(os.path.join("world_data", self.ENV_FILE_NAME))
+        self.world = EvoWorld.from_json(os.path.join("envs", "world_data", self.ENV_NAME + ".json"))
 
         # add robot1 to world
         self.world.add_from_array(

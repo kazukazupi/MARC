@@ -11,7 +11,6 @@ class OjamaDepth4EnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "PassAndBlock-v0"
     ADDITIONAL_OBS_DIM = 17
-    ENV_FILE_NAME = "Ojama-depth-4.json"
     ROBOT1_INIT_POS = (8, 6)
     ROBOT2_INIT_POS = (15, 2)
 

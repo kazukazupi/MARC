@@ -11,7 +11,6 @@ class ChimneyClashEnvClass(MultiAgentEvoGymBase):
 
     ENV_NAME = "ChimneyClash-v0"
     ADDITIONAL_OBS_DIM = 4
-    ENV_FILE_NAME = "ChimneyClash.json"
     ROBOT1_INIT_POS = (7, 1)
     ROBOT2_INIT_POS = (9, 7)
 

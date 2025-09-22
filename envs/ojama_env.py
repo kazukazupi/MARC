@@ -9,7 +9,7 @@ from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 class OjamaDepth4EnvClass(MultiAgentEvoGymBase):
 
-    ENV_NAME = "Ojama-d4"
+    ENV_NAME = "PassAndBlock-v0"
     ADDITIONAL_OBS_DIM = 17
     ENV_FILE_NAME = "Ojama-depth-4.json"
     ROBOT1_INIT_POS = (8, 6)

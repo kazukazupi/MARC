@@ -80,7 +80,7 @@ class PackageBase(MultiAgentEvoGymBase):
 
 class ObjectPushEnvClass(PackageBase):
 
-    ENV_NAME = "MultiPusher-v0"
+    ENV_NAME = "BoxPush-v0"
     ENV_FILE_NAME = "push_env.json"
     ROBOT1_INIT_POS = (8, 3)
     ROBOT2_INIT_POS = (22, 3)
@@ -185,7 +185,7 @@ class ObjectPushEnvClass(PackageBase):
 
 class AboveObjectPushEnvClass(PackageBase):
 
-    ENV_NAME = "MultiPusher-v2"
+    ENV_NAME = "AboveBoxPush-v0"
     ENV_FILE_NAME = "MultiPusher-v2.json"
     ROBOT1_INIT_POS = (7, 1)
     ROBOT2_INIT_POS = (19, 1)

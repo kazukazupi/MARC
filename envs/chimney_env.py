@@ -9,7 +9,7 @@ from envs.typehints import ActionDict, BoolDict, InfoDict, ObsDict, RewardDict
 
 class ChimneyClashEnvClass(MultiAgentEvoGymBase):
 
-    ENV_NAME = "ChimneyClash"
+    ENV_NAME = "ChimneyClash-v0"
     ADDITIONAL_OBS_DIM = 4
     ENV_FILE_NAME = "ChimneyClash.json"
     ROBOT1_INIT_POS = (7, 1)

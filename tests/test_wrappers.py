@@ -2,7 +2,7 @@ import numpy as np
 from evogym import sample_robot  # type: ignore
 
 from alg.ppo.multi_agent_envs import MultiAgentDummyVecEnv
-from envs.sumo_env import SimpleSumoEnvClass
+from envs.sumo import SumoEnvClass
 
 
 def test_maenv_wrapper():
@@ -11,7 +11,7 @@ def test_maenv_wrapper():
     body_2, connections_2 = sample_robot((5, 5))
 
     env_funs = [
-        lambda: SimpleSumoEnvClass(
+        lambda: SumoEnvClass(
             body_1=body_1,
             body_2=body_2,
             connections_1=connections_1,

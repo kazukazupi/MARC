@@ -1,10 +1,10 @@
 from typing import Any, List
 
 from envs.base import MultiAgentEvoGymBase
-from envs.chimney_env import ChimneyClashEnvClass
-from envs.ojama_env import PassAndBlockEnvClass
-from envs.push_env import AboveBoxPushEnvClass, BoxPushEnvClass
-from envs.sumo_env import SumoEnvClass
+from envs.box_push import AboveBoxPushEnvClass, BoxPushEnvClass
+from envs.chimney_clash import ChimneyClashEnvClass
+from envs.pass_and_block import PassAndBlockEnvClass
+from envs.sumo import SumoEnvClass
 
 ENV_CLASSES: List[type[MultiAgentEvoGymBase]] = [
     SumoEnvClass,

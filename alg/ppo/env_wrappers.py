@@ -1,10 +1,12 @@
 from copy import copy, deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import gymnasium as gym  # type: ignore
 import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
+from alg.ppo.model import Agent
 from envs import make
 from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
@@ -20,6 +22,50 @@ VecPtActionDict = Dict[AgentID, torch.Tensor]
 VecPtRewardDict = Dict[AgentID, torch.Tensor]
 VecPtDoneDict = Dict[AgentID, torch.Tensor]
 VecPtInfoDict = VecInfoDict
+
+
+class FixedOpponentEnv(gym.Env):
+
+    def __init__(
+        self, env: MultiAgentEvoGymBase, self_id: AgentID, opponent_id: AgentID, opponent: Optional[Agent] = None
+    ):
+
+        self.env = env
+        self.self_id = self_id
+        self.opponent_id = opponent_id
+        self.opponent = opponent
+
+        self.observation_space = self.env.observation_space(self_id)
+        self.action_space = self.env.action_space(self_id)
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+
+        if self.opponent is None:
+            ret = self.env.step({self.self.id: action})
+        else:
+            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
+
+        return (
+            ret[0][self.self_id],
+            ret[1][self.self_id],
+            ret[2][self.self_id],
+            ret[3][self.self_id],
+            ret[4][self.self_id],
+        )
+
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+
+        if self.opponent is None:
+            ret = self.env.reset(seed=seed, options=options)
+        else:
+            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
+
+        return ret[0][self.self_id], ret[1][self.self_id]
+
+    def render(self):
+        return self.env.render()
 
 
 class MultiAgentDummyVecEnv:

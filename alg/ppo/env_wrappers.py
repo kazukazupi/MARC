@@ -41,7 +41,7 @@ class FixedOpponentEnv(gym.Env):
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
 
         if self.opponent is None:
-            ret = self.env.step({self.self.id: action})
+            ret = self.env.step({self.self_id: action})
         else:
             raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
 

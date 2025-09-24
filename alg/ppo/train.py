@@ -7,8 +7,8 @@ from typing import Dict, List
 import torch
 
 from alg.coea.structure import Structure
+from alg.ppo.env_wrappers import make_vec_envs
 from alg.ppo.model import Agent
-from alg.ppo.multi_agent_envs import make_vec_envs
 from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
 from alg.ppo.storage import RolloutStorage

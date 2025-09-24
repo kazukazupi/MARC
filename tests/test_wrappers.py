@@ -1,7 +1,7 @@
 import numpy as np
 from evogym import sample_robot  # type: ignore
 
-from alg.ppo.multi_agent_envs import MultiAgentDummyVecEnv
+from alg.ppo.env_wrappers import MultiAgentDummyVecEnv
 from envs.sumo import SumoEnvClass
 
 

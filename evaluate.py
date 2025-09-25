@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from alg.coea.structure import Structure
-from alg.ppo import Agent, make_vec_envs
+from alg.ppo import Agent, make_multi_agent_vec_envs
 from envs import AgentID
 from utils import get_agent_names
 
@@ -27,7 +27,7 @@ def evaluate(
 
     agent_names = get_agent_names()
 
-    envs = make_vec_envs(
+    envs = make_multi_agent_vec_envs(
         env_name,
         num_processes,
         None,

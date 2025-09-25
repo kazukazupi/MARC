@@ -7,7 +7,7 @@ from typing import Dict, List
 import torch
 
 from alg.coea.structure import Structure
-from alg.ppo.env_wrappers import make_vec_envs
+from alg.ppo.env_wrappers import make_multi_agent_vec_envs
 from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
@@ -37,7 +37,7 @@ def train(
     for a, o in zip(agent_names, reversed(agent_names)):
 
         # Initialize environment
-        vec_envs[a] = make_vec_envs(
+        vec_envs[a] = make_multi_agent_vec_envs(
             args.env_name,
             args.num_processes,
             args.gamma,

@@ -246,7 +246,7 @@ class MultiAgentVecPytorch:
 
 
 # TODO: 完全な並列環境、シード値設定
-def make_vec_envs(
+def make_multi_agent_vec_envs(
     env_name: str,
     num_processes: int,
     gamma: Optional[float],

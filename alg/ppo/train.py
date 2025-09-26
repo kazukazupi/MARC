@@ -14,25 +14,24 @@ from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
 from alg.ppo.storage import RolloutStorage
-from envs import AgentID
 from utils import get_agent_names
 
 
 def train(
     args: argparse.Namespace,
-    structures: Dict[AgentID, Structure],
+    structures: Dict[str, Structure],
 ):
 
     assert any([not s.is_trained for s in structures.values()]), "already trained."
 
-    agents: Dict[AgentID, Agent] = {}
-    opponents: Dict[AgentID, Agent] = {}
-    updaters: Dict[AgentID, PPO] = {}
-    rollouts: Dict[AgentID, RolloutStorage] = {}
-    train_csv_paths: Dict[AgentID, str] = {}
+    agents: Dict[str, Agent] = {}
+    opponents: Dict[str, Agent] = {}
+    updaters: Dict[str, PPO] = {}
+    rollouts: Dict[str, RolloutStorage] = {}
+    train_csv_paths: Dict[str, str] = {}
     vec_envs = {}
-    opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
-    controller_paths: Dict[AgentID, List[str]] = {}
+    opponents_last_obs: Dict[str, torch.Tensor] = {}
+    controller_paths: Dict[str, List[str]] = {}
 
     agent_names = get_agent_names()
 
@@ -168,8 +167,8 @@ def train(
 def train_against_fixed_opponent(
     args: argparse.Namespace,
     self_structure: Structure,
-    self_agent_name: AgentID,
-    opponent_agent_name: AgentID,
+    self_agent_name: str,
+    opponent_agent_name: str,
 ):
 
     assert not self_structure.is_trained, "already trained."

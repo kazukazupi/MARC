@@ -9,12 +9,11 @@ import torch
 
 from alg.coea.structure import Structure
 from alg.ppo import Agent, make_multi_agent_vec_envs
-from envs import AgentID
 from utils import get_agent_names
 
 
 def evaluate(
-    structures: Dict[AgentID, Structure],
+    structures: Dict[str, Structure],
     env_name: str,
     num_processes: int,
     device: torch.device,

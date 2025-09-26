@@ -10,26 +10,24 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize  # type: 
 from alg.ppo.model import Agent
 from envs import make
 from envs.base import MultiAgentEvoGymBase
-from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
+from envs.typehints import ActionDict, ObsDict, ObsType
 
 VecObsDict = ObsDict
 VecActionDict = ActionDict
-VecRewardDict = Dict[AgentID, np.ndarray]
-VecDoneDict = Dict[AgentID, np.ndarray]
-VecInfoDict = Dict[AgentID, List[Dict[str, Any]]]
+VecRewardDict = Dict[str, np.ndarray]
+VecDoneDict = Dict[str, np.ndarray]
+VecInfoDict = Dict[str, List[Dict[str, Any]]]
 
-VecPtObsDict = Dict[AgentID, torch.Tensor]
-VecPtActionDict = Dict[AgentID, torch.Tensor]
-VecPtRewardDict = Dict[AgentID, torch.Tensor]
-VecPtDoneDict = Dict[AgentID, torch.Tensor]
+VecPtObsDict = Dict[str, torch.Tensor]
+VecPtActionDict = Dict[str, torch.Tensor]
+VecPtRewardDict = Dict[str, torch.Tensor]
+VecPtDoneDict = Dict[str, torch.Tensor]
 VecPtInfoDict = VecInfoDict
 
 
 class FixedOpponentEnv(gym.Env):
 
-    def __init__(
-        self, env: MultiAgentEvoGymBase, self_id: AgentID, opponent_id: AgentID, opponent: Optional[Agent] = None
-    ):
+    def __init__(self, env: MultiAgentEvoGymBase, self_id: str, opponent_id: str, opponent: Optional[Agent] = None):
 
         self.env = env
         self.self_id = self_id
@@ -178,7 +176,7 @@ class MultiAgentVecNormalize(MultiAgentDummyVecEnv):
     def __init__(
         self,
         env_funcs: List[Callable[[], MultiAgentEvoGymBase]],
-        training: Union[bool, Dict[AgentID, bool]] = True,
+        training: Union[bool, Dict[str, bool]] = True,
         norm_obs: bool = True,
         norm_reward: bool = True,
         clip_obs: float = 10.0,
@@ -293,7 +291,7 @@ def make_multi_agent_vec_envs(
     num_processes: int,
     gamma: Optional[float],
     device: torch.device,
-    training: Union[bool, Dict[AgentID, bool]] = True,
+    training: Union[bool, Dict[str, bool]] = True,
     norm_obs: bool = True,
     norm_reward: bool = True,
     seed: Optional[int] = None,
@@ -326,8 +324,8 @@ def make_single_agent_vec_env(
     num_processes: int,
     gamma: Optional[float],
     device: torch.device,
-    self_id: AgentID,
-    opponent_id: AgentID,
+    self_id: str,
+    opponent_id: str,
     opponent: Optional[Agent] = None,
     training: bool = True,
     norm_obs: bool = True,

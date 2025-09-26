@@ -90,8 +90,21 @@ class VecPytorch:
         observation = self.env.reset()
         return torch.tensor(observation, dtype=torch.float32).to(self.device)
 
-    def __getattr__(self, name):
-        return getattr(self.env, name)
+    @property
+    def observation_space(self) -> gym.spaces.Box:
+        return self.env.observation_space
+
+    @property
+    def action_space(self) -> gym.spaces.Box:
+        return self.env.action_space
+
+    @property
+    def obs_rms(self) -> RunningMeanStd:
+        return self.env.obs_rms
+
+    @obs_rms.setter
+    def obs_rms(self, value: RunningMeanStd) -> None:
+        self.env.obs_rms = value
 
 
 class MultiAgentDummyVecEnv:

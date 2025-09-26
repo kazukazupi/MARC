@@ -231,6 +231,8 @@ def train_against_fixed_opponent(
         writer = csv.writer(f)
         writer.writerow(["updates", "num timesteps", "train reward"])
 
+    episode_rewards = np.zeros(args.num_processes, dtype=np.float32)
+
     for j in range(args.num_updates):
 
         update_linear_schedule(updater.optimizer, j, args.num_updates, args.lr)
@@ -242,12 +244,15 @@ def train_against_fixed_opponent(
 
             observations, rewards, dones, infos = vec_env.step(action)
 
-            for info in infos:
-                if "episode" in info.keys():
+            episode_rewards += vec_env.get_original_reward()
+
+            for i, done in enumerate(dones):
+                if done:
                     with open(train_csv_path, "a") as f:
                         total_num_steps = args.num_processes * (j * args.num_steps + step + 1)
                         writer = csv.writer(f)
-                        writer.writerow([j, total_num_steps, info["episode"]["r"]])
+                        writer.writerow([j, total_num_steps, episode_rewards[i]])
+                    episode_rewards[i] = 0.0
 
             masks = torch.FloatTensor([[0.0] if done else [1.0] for done in dones])
             bad_masks = torch.FloatTensor([[0.0] if info["TimeLimit.truncated"] else [1.0] for info in infos])

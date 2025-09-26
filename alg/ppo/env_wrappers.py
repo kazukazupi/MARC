@@ -1,10 +1,13 @@
 from copy import copy, deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import gymnasium as gym  # type: ignore
 import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize  # type: ignore
 
+from alg.ppo.model import Agent
 from envs import make
 from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
@@ -20,6 +23,75 @@ VecPtActionDict = Dict[AgentID, torch.Tensor]
 VecPtRewardDict = Dict[AgentID, torch.Tensor]
 VecPtDoneDict = Dict[AgentID, torch.Tensor]
 VecPtInfoDict = VecInfoDict
+
+
+class FixedOpponentEnv(gym.Env):
+
+    def __init__(
+        self, env: MultiAgentEvoGymBase, self_id: AgentID, opponent_id: AgentID, opponent: Optional[Agent] = None
+    ):
+
+        self.env = env
+        self.self_id = self_id
+        self.opponent_id = opponent_id
+        self.opponent = opponent
+
+        self.observation_space = self.env.observation_space(self_id)
+        self.action_space = self.env.action_space(self_id)
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+
+        if self.opponent is None:
+            ret = self.env.step({self.self_id: action})
+        else:
+            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
+
+        return (
+            ret[0][self.self_id],
+            ret[1][self.self_id],
+            ret[2][self.self_id],
+            ret[3][self.self_id],
+            ret[4][self.self_id],
+        )
+
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+
+        if self.opponent is None:
+            ret = self.env.reset(seed=seed, options=options)
+        else:
+            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
+
+        return ret[0][self.self_id], ret[1][self.self_id]
+
+    def render(self):
+        return self.env.render()
+
+
+class VecPytorch:
+
+    def __init__(self, env: VecNormalize, device: torch.device = torch.device("cpu")):
+        self.env = env
+        self.device = device
+
+    def step(self, action: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, List[Dict[str, Any]]]:
+
+        action_ = action.cpu().numpy()
+        observation_, reward_, done_, info = self.env.step(action_)
+
+        observation = torch.tensor(observation_, dtype=torch.float32).to(self.device)
+        reward = torch.tensor(reward_, dtype=torch.float32).to(self.device)
+        done = torch.tensor(done_, dtype=torch.bool).to(self.device)
+
+        return observation, reward, done, info
+
+    def reset(self) -> torch.Tensor:
+        observation = self.env.reset()
+        return torch.tensor(observation, dtype=torch.float32).to(self.device)
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
 
 
 class MultiAgentDummyVecEnv:
@@ -200,7 +272,7 @@ class MultiAgentVecPytorch:
 
 
 # TODO: 完全な並列環境、シード値設定
-def make_vec_envs(
+def make_multi_agent_vec_envs(
     env_name: str,
     num_processes: int,
     gamma: Optional[float],
@@ -231,3 +303,41 @@ def make_vec_envs(
         vec_env.action_space(a).seed(seed)
 
     return MultiAgentVecPytorch(vec_env, device=device)
+
+
+def make_single_agent_vec_env(
+    env_name: str,
+    num_processes: int,
+    gamma: Optional[float],
+    device: torch.device,
+    self_id: AgentID,
+    opponent_id: AgentID,
+    opponent: Optional[Agent] = None,
+    training: bool = True,
+    norm_obs: bool = True,
+    norm_reward: bool = True,
+    seed: Optional[int] = None,
+    **env_kwargs: Any,
+) -> VecPytorch:
+
+    def _thunk():
+        env = make(env_name, **env_kwargs)
+        env = FixedOpponentEnv(env, self_id, opponent_id, opponent)
+        return env
+
+    if num_processes != 1:
+        raise NotImplementedError("Only one process is supported for now.")
+
+    envs = [_thunk for _ in range(num_processes)]
+
+    venv = DummyVecEnv(envs)
+
+    vec_norm = VecNormalize(
+        venv,
+        training=training,
+        norm_obs=norm_obs,
+        norm_reward=norm_reward,
+        gamma=gamma if gamma is not None else 0.99,
+    )
+
+    return VecPytorch(vec_norm, device=device)

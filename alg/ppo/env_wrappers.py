@@ -106,6 +106,9 @@ class VecPytorch:
     def obs_rms(self, value: RunningMeanStd) -> None:
         self.env.obs_rms = value
 
+    def get_original_reward(self) -> np.ndarray:
+        return self.env.get_original_reward()
+
 
 class MultiAgentDummyVecEnv:
 

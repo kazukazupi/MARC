@@ -6,16 +6,17 @@ from typing import Dict, List, Literal
 
 from pydantic import BaseModel
 
+from utils import AGENT_1, AGENT_2, AgentID
+
 
 def get_matches(
     listA: List[int],
     listB: List[int],
     num_opponents: int,
-    agent_names: List[str],
     metadata_dir_path: str,
     generation: int,
     mode: Literal["train", "eval"],
-) -> List[Dict[str, int]]:
+) -> List[Dict[AgentID, int]]:
 
     if mode == "eval" and os.path.exists(os.path.join(metadata_dir_path, "eval_match_metadata.json")):
         with open(os.path.join(metadata_dir_path, "eval_match_metadata.json"), "r") as f:
@@ -36,8 +37,8 @@ def get_matches(
             b = shuffled_listB[(idx + d) % len(listB)]
             matching.append(
                 {
-                    agent_names[0]: a,
-                    agent_names[1]: b,
+                    AGENT_1: a,
+                    AGENT_2: b,
                 }
             )
 
@@ -64,7 +65,7 @@ class StructureMetadata(BaseModel):
 
 class MatchMetadata(BaseModel):
     generation: int
-    matches: List[Dict[str, int]]
+    matches: List[Dict[AgentID, int]]
 
 
 class EvolutionMetaData(BaseModel):

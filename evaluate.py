@@ -9,11 +9,11 @@ import torch
 
 from alg.coea.structure import Structure
 from alg.ppo import Agent, make_multi_agent_vec_envs
-from utils import get_agent_names
+from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID
 
 
 def evaluate(
-    structures: Dict[str, Structure],
+    structures: Dict[AgentID, Structure],
     env_name: str,
     num_processes: int,
     device: torch.device,
@@ -24,8 +24,6 @@ def evaluate(
     movie_path: Optional[str] = None,
 ) -> Dict[str, float]:
 
-    agent_names = get_agent_names()
-
     envs = make_multi_agent_vec_envs(
         env_name,
         num_processes,
@@ -33,10 +31,10 @@ def evaluate(
         device,
         training=False,
         seed=seed,
-        body_1=structures[agent_names[0]].body,
-        body_2=structures[agent_names[1]].body,
-        connections_1=structures[agent_names[0]].connections,
-        connections_2=structures[agent_names[1]].connections,
+        body_1=structures[AGENT_1].body,
+        body_2=structures[AGENT_2].body,
+        connections_1=structures[AGENT_1].connections,
+        connections_2=structures[AGENT_2].connections,
         render_mode=render_mode,
         render_options=render_options,
     )
@@ -93,7 +91,7 @@ def evaluate(
     if render_mode == "rgb_array" and writer is not None:
         writer.release()
 
-    if "fitness" in infos[agent_names[0]][0]:
+    if "fitness" in infos[AGENT_1][0]:
         return {a: infos[a][0]["fitness"] for a in envs.agents}
 
     return {a: float(np.mean(episode_rewards[a])) for a in envs.agents}
@@ -111,9 +109,10 @@ if __name__ == "__main__":
         env_info = json.load(f)
 
     env_name = env_info["env_name"]
-    agent_names = get_agent_names()
 
-    structures = {a: Structure.from_save_path(os.path.join(args.save_path, a)) for a in agent_names}
+    structures: Dict[AgentID, Structure] = {
+        a: Structure.from_save_path(os.path.join(args.save_path, a)) for a in AGENT_IDS
+    }
 
     returns = evaluate(
         structures,

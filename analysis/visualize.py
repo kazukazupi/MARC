@@ -1,12 +1,13 @@
 import argparse
 import os
+from typing import Dict
 
 import torch
 
 from alg.coea.structure import Structure
 from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
-from utils import get_agent_names
+from utils import AGENT_IDS, AgentID
 
 if __name__ == "__main__":
 
@@ -45,11 +46,11 @@ if __name__ == "__main__":
         raise ValueError("Invalid number of generations.")
 
     if args.id is not None:
-        assert len(args.id) == len(get_agent_names()), "The number of ids must match the number of agents."
+        assert len(args.id) == 2, "The number of ids must match the number of agents."
 
     # Load structures
-    structures = {}
-    for i, (a, generation) in enumerate(zip(get_agent_names(), args.generations)):
+    structures: Dict[AgentID, Structure] = {}
+    for i, (a, generation) in enumerate(zip(AGENT_IDS, args.generations)):
         csv_path = os.path.join(args.experiment_dir, a, "fitnesses.csv")
         if args.id is None:
             id_ = get_top_robot_ids(csv_path, generation=generation)[0]

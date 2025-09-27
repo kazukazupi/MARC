@@ -14,7 +14,7 @@ from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
 from alg.ppo.storage import RolloutStorage
-from utils import get_agent_names
+from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID, get_opponent_id
 
 
 def train(
@@ -33,9 +33,8 @@ def train(
     opponents_last_obs: Dict[str, torch.Tensor] = {}
     controller_paths: Dict[str, List[str]] = {}
 
-    agent_names = get_agent_names()
-
-    for a, o in zip(agent_names, reversed(agent_names)):
+    for a in AGENT_IDS:
+        o = get_opponent_id(a)
 
         # Initialize environment
         vec_envs[a] = make_multi_agent_vec_envs(
@@ -44,10 +43,10 @@ def train(
             args.gamma,
             args.device,
             training={a: True, o: False},
-            body_1=structures[agent_names[0]].body,
-            body_2=structures[agent_names[1]].body,
-            connections_1=structures[agent_names[0]].connections,
-            connections_2=structures[agent_names[1]].connections,
+            body_1=structures[AGENT_1].body,
+            body_2=structures[AGENT_2].body,
+            connections_1=structures[AGENT_1].connections,
+            connections_2=structures[AGENT_2].connections,
         )
 
         # Create agent
@@ -105,7 +104,8 @@ def train(
 
     for j in range(args.num_updates):
 
-        for a, o in zip(agent_names, reversed(agent_names)):
+        for a in AGENT_IDS:
+            o = get_opponent_id(a)
 
             update_linear_schedule(updaters[a].optimizer, j, args.num_updates, args.lr)
 
@@ -160,15 +160,15 @@ def train(
                     controller_path,
                 )
 
-    for a in agent_names:
+    for a in AGENT_IDS:
         structures[a].is_trained = True
 
 
 def train_against_fixed_opponent(
     args: argparse.Namespace,
     self_structure: Structure,
-    self_agent_name: str,
-    opponent_agent_name: str,
+    self_agent_name: AgentID,
+    opponent_agent_name: AgentID,
 ):
 
     assert not self_structure.is_trained, "already trained."

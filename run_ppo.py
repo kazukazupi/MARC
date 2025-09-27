@@ -5,12 +5,12 @@ import numpy as np
 
 from alg.coea.structure import Structure
 from alg.ppo import train
-from utils import get_agent_names, get_args
+from utils import AGENT_IDS, get_args
 
 if __name__ == "__main__":
 
     args = get_args()
-    agent_names = get_agent_names()
+    agent_names = AGENT_IDS
 
     save_path = os.path.join("experiments", "ppo", args.env_name, args.exp_dirname)
     os.makedirs(save_path)

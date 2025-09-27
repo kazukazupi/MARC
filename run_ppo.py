@@ -25,9 +25,9 @@ if __name__ == "__main__":
         )
 
     structures: Dict[AgentID, Structure] = {}
-    for agent_name in AGENT_IDS:
-        body = np.load(os.path.join("./hand_designed_robots", args.env_name, agent_name, "body.npy"))
-        connections = np.load(os.path.join("./hand_designed_robots", args.env_name, agent_name, "connections.npy"))
-        structures[agent_name] = Structure(os.path.join(save_path, agent_name), body, connections)
+    for a in AGENT_IDS:
+        body = np.load(os.path.join("./hand_designed_robots", args.env_name, a, "body.npy"))
+        connections = np.load(os.path.join("./hand_designed_robots", args.env_name, a, "connections.npy"))
+        structures[a] = Structure(os.path.join(save_path, a), body, connections)
 
     train(args, structures)

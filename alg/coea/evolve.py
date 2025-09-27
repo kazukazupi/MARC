@@ -78,7 +78,7 @@ def evolve(args: argparse.Namespace):
         for match in matches:
             if num_trainings >= args.max_trainings:
                 break
-            structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
+            structures = {agent_id: populations[agent_id][id] for agent_id, id in match.items()}
             train(args, structures)
             logging.info(f"Trained {match[AGENT_1]} vs {match[AGENT_2]} ({num_trainings+1}/{args.max_trainings})")
             num_trainings += 1
@@ -96,7 +96,7 @@ def evolve(args: argparse.Namespace):
         )
 
         for match in matches:
-            structures = {agent_name: populations[agent_name][id] for agent_name, id in match.items()}
+            structures = {agent_id: populations[agent_id][id] for agent_id, id in match.items()}
 
             if structures[AGENT_1].has_fought(match[AGENT_2]):
                 assert structures[AGENT_2].has_fought(match[AGENT_1])
@@ -112,9 +112,9 @@ def evolve(args: argparse.Namespace):
                 seed=None,
             )
 
-            for agent_name in AGENT_IDS:
-                opponent_name = get_opponent_id(agent_name)
-                populations[agent_name].set_score(match[agent_name], match[opponent_name], results[agent_name])
+            for agent_id in AGENT_IDS:
+                opponent_id = get_opponent_id(agent_id)
+                populations[agent_id].set_score(match[agent_id], match[opponent_id], results[agent_id])
             logging.info(
                 f"Evaluated {match[AGENT_1]}({results[AGENT_1]:.3f}) " f"vs {match[AGENT_2]}({results[AGENT_2]:.3f})"
             )
@@ -137,9 +137,9 @@ def evolve(args: argparse.Namespace):
         for name in AGENT_IDS:
             non_survivors = populations[name].update(num_survivors, num_reproductions)
             non_survivors_dict[name] = non_survivors
-        for agent_name in AGENT_IDS:
-            opponent_name = get_opponent_id(agent_name)
-            for opponent_id in non_survivors_dict[opponent_name]:
-                populations[agent_name].delete_score(opponent_id)
+        for agent_id in AGENT_IDS:
+            opponent_id = get_opponent_id(agent_id)
+            for opponent_robot_id in non_survivors_dict[opponent_id]:
+                populations[agent_id].delete_score(opponent_robot_id)
 
     logging.info("Experiment finished")

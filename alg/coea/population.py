@@ -8,15 +8,21 @@ import numpy as np
 from evogym import hashable, sample_robot  # type: ignore
 
 from alg.coea.structure import Structure, mutate
+from utils import AgentID
 
 
 class Population:
 
     def __init__(
-        self, agent_name: str, save_path: str, pop_size: int, robot_shape: Tuple[int, int], is_continuing: bool = False
+        self,
+        agent_id: AgentID,
+        save_path: str,
+        pop_size: int,
+        robot_shape: Tuple[int, int],
+        is_continuing: bool = False,
     ):
 
-        self.agent_name = agent_name
+        self.agent_id = agent_id
         self.save_path = save_path
         self.csv_path = os.path.join(self.save_path, "fitnesses.csv")
         self.structures: List[Structure] = []
@@ -34,13 +40,13 @@ class Population:
             os.mkdir(generation_path)
 
             # generate a population
-            for id_ in range(pop_size):
+            for robot_id in range(pop_size):
 
                 body, connections = sample_robot(robot_shape)
                 while hashable(body) in self.population_structure_hashes:
                     body, connections = sample_robot(robot_shape)
 
-                self.structures.append(Structure(os.path.join(generation_path, f"id{id_:02}"), body, connections))
+                self.structures.append(Structure(os.path.join(generation_path, f"id{robot_id:02}"), body, connections))
                 self.population_structure_hashes[hashable(body)] = True
 
         else:
@@ -50,8 +56,8 @@ class Population:
 
             while os.path.exists(generation_path):
 
-                for id_ in range(pop_size):
-                    structure_path = os.path.join(generation_path, f"id{id_:02}")
+                for robot_id in range(pop_size):
+                    structure_path = os.path.join(generation_path, f"id{robot_id:02}")
 
                     if self.generation == 0:
                         assert os.path.exists(structure_path)
@@ -61,7 +67,7 @@ class Population:
                         if not os.path.exists(structure_path):
                             continue
                         structure = Structure.from_save_path(structure_path)
-                        self.structures[id_] = structure
+                        self.structures[robot_id] = structure
 
                     self.population_structure_hashes[hashable(structure.body)] = True
 
@@ -71,7 +77,7 @@ class Population:
             self.generation -= 1
 
     def update(self, num_survivors: int, num_reproductions: int) -> List[int]:
-        logging.info(f"## Updating {self.agent_name} population")
+        logging.info(f"## Updating {self.agent_id} population")
 
         # selection
         if any(fitness is None for fitness in self.fitnesses):
@@ -81,27 +87,27 @@ class Population:
         survivors = sorted_args[:num_survivors]
         non_survivors = sorted_args[num_survivors:]
         logging.info(f"Survivors: {','.join(map(str, survivors))}")
-        for id_ in non_survivors:
-            self.structures[id_].is_died = True
+        for robot_id in non_survivors:
+            self.structures[robot_id].is_died = True
 
         # reproduce
         self.generation += 1
         generation_path = os.path.join(self.save_path, f"generation{self.generation:02}")
         os.mkdir(generation_path)
 
-        for id_ in non_survivors[:num_reproductions]:
-            child_save_path = os.path.join(generation_path, f"id{id_:02}")
+        for child_robot_id in non_survivors[:num_reproductions]:
+            child_save_path = os.path.join(generation_path, f"id{child_robot_id:02}")
             num_attempts = 100
             for _ in range(num_attempts):
-                parent_id = random.choice(survivors)
-                child = mutate(self.structures[parent_id], child_save_path, self.population_structure_hashes)
+                parent_robot_id = random.choice(survivors)
+                child = mutate(self.structures[parent_robot_id], child_save_path, self.population_structure_hashes)
                 if child is not None:
                     break
             else:
                 raise RuntimeError("Failed to generate a child.")
 
-            logging.info(f"Reproduced {parent_id} -> {id_}")
-            self.structures[id_] = child
+            logging.info(f"Reproduced {parent_robot_id} -> {child_robot_id}")
+            self.structures[child_robot_id] = child
             self.population_structure_hashes[hashable(child.body)] = True
 
         return non_survivors
@@ -116,13 +122,13 @@ class Population:
         ]
         return indices
 
-    def set_score(self, self_id: int, opponent_id: int, score: float) -> None:
-        self.structures[self_id].set_score(opponent_id, score)
+    def set_score(self, self_robot_id: int, opponent_robot_id: int, score: float) -> None:
+        self.structures[self_robot_id].set_score(opponent_robot_id, score)
 
-    def delete_score(self, opponent_id: int) -> None:
+    def delete_score(self, opponent_robot_id: int) -> None:
         for structure in self.structures:
-            if structure.has_fought(opponent_id):
-                structure.delete_score(opponent_id)
+            if structure.has_fought(opponent_robot_id):
+                structure.delete_score(opponent_robot_id)
 
     @property
     def fitnesses(self) -> List[Optional[float]]:

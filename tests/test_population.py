@@ -4,18 +4,18 @@ import shutil
 import numpy as np
 
 from alg.coea.population import Population
+from utils import AGENT_1
 
 
 def test_scores():
 
-    agent_name = "test"
     save_path = "tests/tmp_scores"
     pop_size = 25
     eval_num_opponents = 15
     robot_shape = (5, 5)
 
     try:
-        population = Population(agent_name, save_path, pop_size, robot_shape)
+        population = Population(AGENT_1, save_path, pop_size, robot_shape)
 
         scores = np.random.rand(pop_size, eval_num_opponents)
 
@@ -42,19 +42,18 @@ def test_scores():
 def test_population_load():
 
     try:
-        agent_name = "test"
         save_path = "tests/temporary"
         pop_size = 10
         num_survivors = 2
         robot_shape = (5, 5)
 
-        population = Population(agent_name, save_path, pop_size, robot_shape)
+        population = Population(AGENT_1, save_path, pop_size, robot_shape)
 
         for _ in range(10):
 
-            loaded_population = Population(agent_name, save_path, pop_size, robot_shape, True)
+            loaded_population = Population(AGENT_1, save_path, pop_size, robot_shape, True)
 
-            assert population.agent_name == loaded_population.agent_name
+            assert population.agent_id == loaded_population.agent_id
             assert population.save_path == loaded_population.save_path
             assert population.csv_path == loaded_population.csv_path
             assert population.generation == loaded_population.generation

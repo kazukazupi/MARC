@@ -20,7 +20,7 @@ def test_fixed_opponent_env():
         connections_2=connections_2,
         # render_mode="human",
     )
-    env = FixedOpponentEnv(env, "robot_1", "robot_2")
+    env = FixedOpponentEnv(env, "robot_1")
 
     env.reset()
 
@@ -50,7 +50,7 @@ def test_fixed_opponent_env_vectorize():
             connections_1=connections_1,
             connections_2=connections_2,
         )
-        return FixedOpponentEnv(env, "robot_1", "robot_2")
+        return FixedOpponentEnv(env, "robot_1")
 
     vec_env = DummyVecEnv([_thunk])
 

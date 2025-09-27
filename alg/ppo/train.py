@@ -167,8 +167,7 @@ def train(
 def train_against_fixed_opponent(
     args: argparse.Namespace,
     self_structure: Structure,
-    self_agent_name: AgentID,
-    opponent_agent_name: AgentID,
+    agent_id: AgentID,
 ):
 
     assert not self_structure.is_trained, "already trained."
@@ -182,8 +181,7 @@ def train_against_fixed_opponent(
         args.num_processes,
         args.gamma,
         args.device,
-        self_id=self_agent_name,
-        opponent_id=opponent_agent_name,
+        agent_id,
         body_1=self_structure.body,
         body_2=opponent_body,
         connections_1=self_structure.connections,

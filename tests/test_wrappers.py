@@ -1,8 +1,11 @@
+from typing import Dict
+
 import numpy as np
 from evogym import sample_robot  # type: ignore
 
 from alg.ppo.env_wrappers import MultiAgentDummyVecEnv
 from envs.sumo import SumoEnvClass
+from utils import AgentID
 
 
 def test_maenv_wrapper():
@@ -32,11 +35,11 @@ def test_maenv_wrapper():
 
         action_1 = raw_env.action_space("robot_1").sample()
         action_2 = raw_env.action_space("robot_2").sample()
-        action = {"robot_1": action_1, "robot_2": action_2}
+        action: Dict[AgentID, np.ndarray] = {"robot_1": action_1, "robot_2": action_2}
 
         observations, rewards, terminations, truncations, _ = raw_env.step(action)
 
-        vec_action = {
+        vec_action: Dict[AgentID, np.ndarray] = {
             "robot_1": np.expand_dims(action_1, 0),
             "robot_2": np.expand_dims(action_2, 0),
         }

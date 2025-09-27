@@ -1,11 +1,13 @@
 import argparse
 import random
+from typing import Dict
 
 import cv2  # type: ignore
 import numpy as np
 from evogym import sample_robot  # type: ignore
 
 from envs import make
+from utils import AgentID
 
 if __name__ == "__main__":
 
@@ -63,7 +65,7 @@ if __name__ == "__main__":
             cv2.waitKey(1)
         action_1 = env.action_space("robot_1").sample()
         action_2 = env.action_space("robot_2").sample()
-        action = {"robot_1": action_1, "robot_2": action_2}
+        action: Dict[AgentID, np.ndarray] = {"robot_1": action_1, "robot_2": action_2}
         ob, reward, terminated, truncated, info = env.step(action)
         cum_reward_1 += reward["robot_1"]
         cum_reward_2 += reward["robot_2"]

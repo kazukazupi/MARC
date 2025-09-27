@@ -39,15 +39,15 @@ class Structure:
         connections = np.load(os.path.join(save_path, "connections.npy"))
         return cls(save_path, body, connections, save=False)
 
-    def has_fought(self, id_: int) -> bool:
-        return id_ in self.metadata.scores
+    def has_fought(self, opponent_id: int) -> bool:
+        return opponent_id in self.metadata.scores
 
-    def set_score(self, id_: int, score: float) -> None:
-        self.metadata.scores[id_] = score
+    def set_score(self, opponent_id: int, score: float) -> None:
+        self.metadata.scores[opponent_id] = score
         self.dump_metadata()
 
-    def delete_score(self, id_: int) -> None:
-        del self.metadata.scores[id_]
+    def delete_score(self, opponent_id: int) -> None:
+        del self.metadata.scores[opponent_id]
         self.dump_metadata()
 
     @property

@@ -12,6 +12,7 @@ import torch
 from alg.coea.structure import Structure
 from analysis.analysis_utils import get_max_generation, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
+from utils import AGENT_1, AGENT_2
 
 
 def write_csv(env_name: str, csv_path: str):
@@ -26,7 +27,6 @@ def write_csv(env_name: str, csv_path: str):
 
     exp_dir_list = glob.glob(os.path.join("experiments", "coea", env_name, "*"))
     max_generation = get_max_generation(os.path.join(exp_dir_list[0], "robot_1"))
-    agent_names = ["robot_1", "robot_2"]
 
     # Setup csv
     with open(csv_path, "w") as f:
@@ -38,8 +38,8 @@ def write_csv(env_name: str, csv_path: str):
         product(range(max_generation + 1), repeat=2), product(exp_dir_list, repeat=2)
     ):
         # Get top robot ids
-        fitness_csv_path_1 = os.path.join(exp1, agent_names[0], "fitnesses.csv")
-        fitness_csv_path_2 = os.path.join(exp2, agent_names[1], "fitnesses.csv")
+        fitness_csv_path_1 = os.path.join(exp1, AGENT_1, "fitnesses.csv")
+        fitness_csv_path_2 = os.path.join(exp2, AGENT_2, "fitnesses.csv")
 
         top_robot_ids_1 = get_top_robot_ids(fitness_csv_path_1, top_n=3, generation=gen1)
         top_robot_ids_2 = get_top_robot_ids(fitness_csv_path_2, top_n=3, generation=gen2)
@@ -51,8 +51,8 @@ def write_csv(env_name: str, csv_path: str):
                 continue
 
             # Load Structures
-            robot_save_path_1 = get_robot_save_path(os.path.join(exp1, agent_names[0]), robot_id_1, gen1)
-            robot_save_path_2 = get_robot_save_path(os.path.join(exp2, agent_names[1]), robot_id_2, gen2)
+            robot_save_path_1 = get_robot_save_path(os.path.join(exp1, AGENT_1), robot_id_1, gen1)
+            robot_save_path_2 = get_robot_save_path(os.path.join(exp2, AGENT_2), robot_id_2, gen2)
 
             structure_1 = Structure.from_save_path(robot_save_path_1)
             structure_2 = Structure.from_save_path(robot_save_path_2)

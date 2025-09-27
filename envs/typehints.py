@@ -2,9 +2,10 @@ from typing import Any, Dict
 
 import numpy as np
 
+from utils import AgentID
+
 ObsType = np.ndarray
 ActionType = np.ndarray
-AgentID = str
 
 ObsDict = Dict[AgentID, ObsType]
 ActionDict = Dict[AgentID, ActionType]

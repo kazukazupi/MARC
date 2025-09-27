@@ -10,7 +10,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize  # type: 
 from alg.ppo.model import Agent
 from envs import make
 from envs.base import MultiAgentEvoGymBase
-from envs.typehints import ActionDict, AgentID, ObsDict, ObsType
+from envs.typehints import ActionDict, ObsDict, ObsType
+from utils import AgentID
 
 VecObsDict = ObsDict
 VecActionDict = ActionDict
@@ -27,31 +28,28 @@ VecPtInfoDict = VecInfoDict
 
 class FixedOpponentEnv(gym.Env):
 
-    def __init__(
-        self, env: MultiAgentEvoGymBase, self_id: AgentID, opponent_id: AgentID, opponent: Optional[Agent] = None
-    ):
+    def __init__(self, env: MultiAgentEvoGymBase, agent_id: AgentID, opponent: Optional[Agent] = None):
 
         self.env = env
-        self.self_id = self_id
-        self.opponent_id = opponent_id
+        self.agent_id = agent_id
         self.opponent = opponent
 
-        self.observation_space = self.env.observation_space(self_id)
-        self.action_space = self.env.action_space(self_id)
+        self.observation_space = self.env.observation_space(agent_id)
+        self.action_space = self.env.action_space(agent_id)
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
 
         if self.opponent is None:
-            ret = self.env.step({self.self_id: action})
+            ret = self.env.step({self.agent_id: action})
         else:
             raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
 
         return (
-            ret[0][self.self_id],
-            ret[1][self.self_id],
-            ret[2][self.self_id],
-            ret[3][self.self_id],
-            ret[4][self.self_id],
+            ret[0][self.agent_id],
+            ret[1][self.agent_id],
+            ret[2][self.agent_id],
+            ret[3][self.agent_id],
+            ret[4][self.agent_id],
         )
 
     def reset(
@@ -63,7 +61,7 @@ class FixedOpponentEnv(gym.Env):
         else:
             raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
 
-        return ret[0][self.self_id], ret[1][self.self_id]
+        return ret[0][self.agent_id], ret[1][self.agent_id]
 
     def render(self):
         return self.env.render()
@@ -326,8 +324,7 @@ def make_single_agent_vec_env(
     num_processes: int,
     gamma: Optional[float],
     device: torch.device,
-    self_id: AgentID,
-    opponent_id: AgentID,
+    agent_id: AgentID,
     opponent: Optional[Agent] = None,
     training: bool = True,
     norm_obs: bool = True,
@@ -338,7 +335,7 @@ def make_single_agent_vec_env(
 
     def _thunk():
         env = make(env_name, **env_kwargs)
-        env = FixedOpponentEnv(env, self_id, opponent_id, opponent)
+        env = FixedOpponentEnv(env, agent_id, opponent)
         return env
 
     if num_processes != 1:

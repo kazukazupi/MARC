@@ -1,7 +1,7 @@
 import argparse
 import glob
 import os
-from typing import List
+from typing import Dict, List
 
 import cv2
 import numpy as np
@@ -11,6 +11,7 @@ from tqdm import tqdm
 from alg.coea.structure import Structure
 from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from evaluate import evaluate
+from utils import AgentID
 
 
 def write(experiment_dir: str, generations: List[int]):
@@ -43,7 +44,7 @@ def write(experiment_dir: str, generations: List[int]):
             save_path_1 = get_robot_save_path(os.path.join(experiment_dir, "robot_1"), id1, generation)
             save_path_2 = get_robot_save_path(os.path.join(experiment_dir, "robot_2"), id2, generation)
 
-            structures = {
+            structures: Dict[AgentID, Structure] = {
                 "robot_1": Structure.from_save_path(save_path_1),
                 "robot_2": Structure.from_save_path(save_path_2),
             }

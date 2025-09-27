@@ -9,7 +9,7 @@ import torch
 from evogym import get_full_connectivity  # type: ignore
 
 from alg.coea.structure import Structure
-from alg.ppo.env_wrappers import make_multi_agent_vec_envs, make_single_agent_vec_env
+from alg.ppo.env_wrappers import MultiAgentVecPytorch, make_multi_agent_vec_envs, make_single_agent_vec_env
 from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
 from alg.ppo.ppo_utils import update_linear_schedule
@@ -19,19 +19,19 @@ from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID, get_opponent_id
 
 def train(
     args: argparse.Namespace,
-    structures: Dict[str, Structure],
+    structures: Dict[AgentID, Structure],
 ):
 
     assert any([not s.is_trained for s in structures.values()]), "already trained."
 
-    agents: Dict[str, Agent] = {}
-    opponents: Dict[str, Agent] = {}
-    updaters: Dict[str, PPO] = {}
-    rollouts: Dict[str, RolloutStorage] = {}
-    train_csv_paths: Dict[str, str] = {}
-    vec_envs = {}
-    opponents_last_obs: Dict[str, torch.Tensor] = {}
-    controller_paths: Dict[str, List[str]] = {}
+    agents: Dict[AgentID, Agent] = {}
+    opponents: Dict[AgentID, Agent] = {}
+    updaters: Dict[AgentID, PPO] = {}
+    rollouts: Dict[AgentID, RolloutStorage] = {}
+    train_csv_paths: Dict[AgentID, str] = {}
+    vec_envs: Dict[AgentID, MultiAgentVecPytorch] = {}
+    opponents_last_obs: Dict[AgentID, torch.Tensor] = {}
+    controller_paths: Dict[AgentID, List[str]] = {}
 
     for a in AGENT_IDS:
         o = get_opponent_id(a)

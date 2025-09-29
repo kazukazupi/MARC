@@ -8,8 +8,7 @@ import torch
 
 from alg.coea.coea_utils import get_matches, get_percent_survival_evals, load_evo_metadata, save_evo_metadata
 from alg.coea.population import Population
-from alg.ppo import train
-from evaluate import evaluate
+from alg.ppo import evaluate, train
 from utils import AGENT_1, AGENT_2, AGENT_IDS, get_opponent_id, load_args, save_args
 
 

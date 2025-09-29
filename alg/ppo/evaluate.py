@@ -8,7 +8,8 @@ import numpy as np
 import torch
 
 from alg.coea.structure import Structure
-from alg.ppo import Agent, make_multi_agent_vec_envs
+from alg.ppo.env_wrappers import make_multi_agent_vec_envs
+from alg.ppo.model import Agent
 from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID
 
 
@@ -95,33 +96,3 @@ def evaluate(
         return {a: infos[a][0]["fitness"] for a in envs.agents}
 
     return {a: float(np.mean(episode_rewards[a])) for a in envs.agents}
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--save-path", type=str, required=True)
-    parser.add_argument("--movie-path", type=str, default=None)
-    parser.add_argument("--min-num-episodes", type=int, default=1)
-    args = parser.parse_args()
-
-    with open(os.path.join(args.save_path, "env_info.json"), "r") as f:
-        env_info = json.load(f)
-
-    env_name = env_info["env_name"]
-
-    structures: Dict[AgentID, Structure] = {
-        a: Structure.from_save_path(os.path.join(args.save_path, a)) for a in AGENT_IDS
-    }
-
-    returns = evaluate(
-        structures,
-        env_name,
-        num_processes=1,
-        device=torch.device("cpu"),
-        min_num_episodes=args.min_num_episodes,
-        render_mode="human" if args.movie_path is None else "rgb_array",
-        movie_path=args.movie_path,
-    )
-
-    print(returns)

@@ -1,13 +1,59 @@
 import argparse
 import os
-from typing import Dict
+from typing import Dict, List, Optional
 
 import torch
 
 from alg.coea.structure import Structure
-from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
-from evaluate import evaluate
+from alg.ppo import evaluate
+from analysis.analysis_utils import extract_exp_type, get_env_name, get_robot_save_path, get_top_robot_ids
 from utils import AGENT_IDS, AgentID
+
+
+def load_structures_coea(
+    experiment_dir: str,
+    generations: Optional[List[Optional[int]]] = None,
+    ids: Optional[List[int]] = None,
+) -> Dict[AgentID, Structure]:
+
+    # Process generations, ids
+    if generations is None:
+        generations = [None] * 2
+    elif len(generations) == 1:
+        generations = generations * 2
+    elif len(generations) == 2:
+        pass
+    else:
+        raise ValueError("Invalid number of generations.")
+
+    if ids is not None:
+        assert len(ids) == 2, "The number of ids must match the number of agents."
+
+    # Load structures
+    structures: Dict[AgentID, Structure] = {}
+    for i, (a, generation) in enumerate(zip(AGENT_IDS, generations)):
+        csv_path = os.path.join(experiment_dir, a, "fitnesses.csv")
+        if ids is None:
+            id_ = get_top_robot_ids(csv_path, generation=generation)[0]
+        else:
+            id_ = ids[i]
+        save_path = get_robot_save_path(os.path.join(experiment_dir, a), id_, generation)
+        print(f"Loading {save_path}")
+        structures[a] = Structure.from_save_path(save_path)
+
+    return structures
+
+
+def load_structures_ppo(
+    experiment_dir: str,
+):
+
+    structures: Dict[AgentID, Structure] = {
+        a: Structure.from_save_path(os.path.join(experiment_dir, a)) for a in AGENT_IDS
+    }
+
+    return structures
+
 
 if __name__ == "__main__":
 
@@ -35,30 +81,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Process generations, ids
-    if args.generations is None:
-        args.generations = [None] * 2
-    elif len(args.generations) == 1:
-        args.generations = args.generations * 2
-    elif len(args.generations) == 2:
-        pass
+    # load structures
+    exp_type = extract_exp_type(args.experiment_dir)
+    if exp_type == "coea":
+        structures = load_structures_coea(
+            args.experiment_dir,
+            generations=args.generations,
+            ids=args.id,
+        )
+    elif exp_type == "ppo":
+        structures = load_structures_ppo(args.experiment_dir)
     else:
-        raise ValueError("Invalid number of generations.")
-
-    if args.id is not None:
-        assert len(args.id) == 2, "The number of ids must match the number of agents."
-
-    # Load structures
-    structures: Dict[AgentID, Structure] = {}
-    for i, (a, generation) in enumerate(zip(AGENT_IDS, args.generations)):
-        csv_path = os.path.join(args.experiment_dir, a, "fitnesses.csv")
-        if args.id is None:
-            id_ = get_top_robot_ids(csv_path, generation=generation)[0]
-        else:
-            id_ = args.id[i]
-        save_path = get_robot_save_path(os.path.join(args.experiment_dir, a), id_, generation)
-        print(f"Loading {save_path}")
-        structures[a] = Structure.from_save_path(save_path)
+        raise NotImplementedError("Only coea experiments are supported.")
 
     env_name = get_env_name(args.experiment_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

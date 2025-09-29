@@ -1,5 +1,7 @@
+import json
 import os
-from typing import List, Optional
+from pathlib import PurePath
+from typing import List, Literal, Optional
 
 import pandas as pd  # type: ignore
 
@@ -7,9 +9,37 @@ from utils import load_args
 
 
 def get_env_name(experiment_dir: str) -> str:
-    coea_args = load_args(os.path.join(experiment_dir, "metadata"))
-    env_name = coea_args.env_name
+
+    if extract_exp_type(experiment_dir) == "coea":
+        coea_args = load_args(os.path.join(experiment_dir, "metadata"))
+        env_name = coea_args.env_name
+    elif extract_exp_type(experiment_dir) == "ppo":
+        with open(os.path.join(experiment_dir, "env_info.json"), "r") as f:
+            env_info = json.load(f)
+        env_name = env_info["env_name"]
+    else:
+        raise NotImplementedError("Only coea experiments are supported.")
+
     return env_name
+
+
+def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo"]:
+
+    parts = PurePath(experiment_dir).parts
+
+    if "experiments" not in parts:
+        raise ValueError("The experiment directory path is not valid.")
+
+    idx = parts.index("experiments")
+    if idx + 1 >= len(parts):
+        raise ValueError("The experiment directory path is not valid.")
+
+    if parts[idx + 1] == "coea":
+        return "coea"
+    elif parts[idx + 1] == "ppo":
+        return "ppo"
+    else:
+        raise ValueError("The experiment directory path is not valid.")
 
 
 def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] = None) -> List[int]:

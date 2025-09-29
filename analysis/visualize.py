@@ -5,8 +5,8 @@ from typing import Dict
 import torch
 
 from alg.coea.structure import Structure
+from alg.ppo import evaluate
 from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
-from evaluate import evaluate
 from utils import AGENT_IDS, AgentID
 
 if __name__ == "__main__":

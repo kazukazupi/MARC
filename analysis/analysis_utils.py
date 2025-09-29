@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import PurePath
 from typing import List, Literal, Optional
@@ -12,9 +13,14 @@ def get_env_name(experiment_dir: str) -> str:
     if extract_exp_type(experiment_dir) == "coea":
         coea_args = load_args(os.path.join(experiment_dir, "metadata"))
         env_name = coea_args.env_name
-        return env_name
+    elif extract_exp_type(experiment_dir) == "ppo":
+        with open(os.path.join(experiment_dir, "env_info.json"), "r") as f:
+            env_info = json.load(f)
+        env_name = env_info["env_name"]
     else:
         raise NotImplementedError("Only coea experiments are supported.")
+
+    return env_name
 
 
 def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo"]:

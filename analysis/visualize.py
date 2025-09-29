@@ -44,6 +44,17 @@ def load_structures_coea(
     return structures
 
 
+def load_structures_ppo(
+    experiment_dir: str,
+):
+
+    structures: Dict[AgentID, Structure] = {
+        a: Structure.from_save_path(os.path.join(experiment_dir, a)) for a in AGENT_IDS
+    }
+
+    return structures
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -78,6 +89,8 @@ if __name__ == "__main__":
             generations=args.generations,
             ids=args.id,
         )
+    elif exp_type == "ppo":
+        structures = load_structures_ppo(args.experiment_dir)
     else:
         raise NotImplementedError("Only coea experiments are supported.")
 

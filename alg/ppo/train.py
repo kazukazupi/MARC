@@ -2,13 +2,12 @@ import argparse
 import csv
 import os
 import random
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity  # type: ignore
 
-from alg.coea.structure import Structure
+from alg.coea.structure import DummyRobotStructure, Structure
 from alg.ppo.env_wrappers import MultiAgentVecPytorch, make_multi_agent_vec_envs, make_single_agent_vec_env
 from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
@@ -19,10 +18,12 @@ from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID, get_opponent_id
 
 def train(
     args: argparse.Namespace,
-    structures: Dict[AgentID, Structure],
+    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]],
 ):
 
-    assert any([not s.is_trained for s in structures.values()]), "already trained."
+    for s in structures.values():
+        if isinstance(s, Structure):
+            assert not s.is_trained, "already trained."
 
     agents: Dict[AgentID, Agent] = {}
     opponents: Dict[AgentID, Agent] = {}
@@ -34,6 +35,11 @@ def train(
     controller_paths: Dict[AgentID, List[str]] = {}
 
     for a in AGENT_IDS:
+
+        structure = structures[a]
+        if isinstance(structure, DummyRobotStructure):
+            continue
+
         o = get_opponent_id(a)
 
         # Initialize environment
@@ -60,13 +66,14 @@ def train(
         agents[a].to(args.device)
 
         # Create opponent
-        opponents[a] = Agent(
-            obs_dim=obs_dim,
-            hidden_dim=64,
-            action_dim=action_dim,
-        )
-        opponents[a].to(args.device)
-        opponents[a].load_state_dict(agents[a].state_dict())
+        if isinstance(structures[o], Structure):
+            opponents[a] = Agent(
+                obs_dim=obs_dim,
+                hidden_dim=64,
+                action_dim=action_dim,
+            )
+            opponents[a].to(args.device)
+            opponents[a].load_state_dict(agents[a].state_dict())
 
         # Create updater
         updaters[a] = PPO(
@@ -93,27 +100,31 @@ def train(
         rollouts[a].to(args.device)
         opponents_last_obs[o] = observations[o]
 
-        train_csv_paths[a] = os.path.join(structures[a].save_path, "train_log.csv")
+        train_csv_paths[a] = os.path.join(structure.save_path, "train_log.csv")
         controller_paths[a] = []
 
         with open(train_csv_paths[a], "w") as f:
             writer = csv.writer(f)
             writer.writerow(["updates", "num timesteps", "train reward"])
 
-    actions = {}
-
     for j in range(args.num_updates):
 
         for a in AGENT_IDS:
+
+            structure = structures[a]
+            if isinstance(structure, DummyRobotStructure):
+                continue
             o = get_opponent_id(a)
 
             update_linear_schedule(updaters[a].optimizer, j, args.num_updates, args.lr)
 
             for step in range(args.num_steps):
 
+                actions = {}
                 with torch.no_grad():
                     value, actions[a], action_log_prob = agents[a].act(rollouts[a].obs[step])
-                    _, actions[o], _ = opponents[o].act(opponents_last_obs[o], deterministic=True)
+                    if isinstance(structures[o], Structure):
+                        _, actions[o], _ = opponents[o].act(opponents_last_obs[o], deterministic=True)
 
                 observations, rewards, dones, infos = vec_envs[a].step(actions)
 
@@ -123,7 +134,7 @@ def train(
                             total_num_steps = args.num_processes * (j * args.num_steps + step + 1)
                             writer = csv.writer(f)
                             writer.writerow([j, total_num_steps, info["episode"]["r"]])
-                        if controller_paths[o]:
+                        if isinstance(structures[o], Structure) and controller_paths[o]:
                             delta_index = int(args.delta * len(controller_paths[o]))
                             recent_controllers = controller_paths[o][delta_index:]
                             if recent_controllers:
@@ -150,7 +161,7 @@ def train(
             rollouts[a].after_update()
 
             if j % args.save_interval == 0:
-                controller_path = os.path.join(structures[a].save_path, f"controller_{j}.pt")
+                controller_path = os.path.join(structure.save_path, f"controller_{j}.pt")
                 controller_paths[a].append(controller_path)
                 torch.save(
                     [
@@ -161,19 +172,30 @@ def train(
                 )
 
     for a in AGENT_IDS:
-        structures[a].is_trained = True
+        structure = structures[a]
+        if isinstance(structure, DummyRobotStructure):
+            continue
+        structure.is_trained = True
 
 
 def train_against_fixed_opponent(
     args: argparse.Namespace,
-    self_structure: Structure,
     agent_id: AgentID,
+    self_structure: Structure,
+    opponent_structure: DummyRobotStructure,
 ):
 
     assert not self_structure.is_trained, "already trained."
 
-    opponent_body = np.ones_like(self_structure.body) * 2
-    opponent_connections = get_full_connectivity(opponent_body)
+    # Set structures
+    body_1 = self_structure.body
+    body_2 = opponent_structure.body
+    connections_1 = self_structure.connections
+    connections_2 = opponent_structure.connections
+
+    if agent_id == AGENT_2:
+        body_1, body_2 = body_2, body_1
+        connections_1, connections_2 = connections_2, connections_1
 
     # Initialize environment
     vec_env = make_single_agent_vec_env(
@@ -182,10 +204,10 @@ def train_against_fixed_opponent(
         args.gamma,
         args.device,
         agent_id,
-        body_1=self_structure.body,
-        body_2=opponent_body,
-        connections_1=self_structure.connections,
-        connections_2=opponent_connections,
+        body_1=body_1,
+        body_2=body_2,
+        connections_1=connections_1,
+        connections_2=connections_2,
     )
 
     # Create agent

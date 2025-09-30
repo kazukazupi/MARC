@@ -1,20 +1,21 @@
 import argparse
+import json
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import torch
 
-from alg.coea.structure import Structure
+from alg.coea.structure import DummyRobotStructure, Structure
 from alg.ppo import evaluate
 from analysis.analysis_utils import extract_exp_type, get_env_name, get_robot_save_path, get_top_robot_ids
-from utils import AGENT_IDS, AgentID
+from utils import AGENT_IDS, AgentID, get_opponent_id
 
 
 def load_structures_coea(
     experiment_dir: str,
     generations: Optional[List[Optional[int]]] = None,
     ids: Optional[List[int]] = None,
-) -> Dict[AgentID, Structure]:
+):
 
     # Process generations, ids
     if generations is None:
@@ -44,12 +45,27 @@ def load_structures_coea(
     return structures
 
 
-def load_structures_ppo(
-    experiment_dir: str,
-):
+def load_structures_ppo(experiment_dir: str):
 
     structures: Dict[AgentID, Structure] = {
         a: Structure.from_save_path(os.path.join(experiment_dir, a)) for a in AGENT_IDS
+    }
+
+    return structures
+
+
+def load_structures_ppo_single(experiment_dir: str):
+
+    with open(os.path.join(experiment_dir, "env_info.json"), "r") as f:
+        env_info = json.load(f)
+
+    self_robot_id = env_info["self_robot_id"]
+    opponent_robot_id = get_opponent_id(self_robot_id)
+    dummy_body_type = env_info["dummy_body_type"]
+
+    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]] = {
+        self_robot_id: Structure.from_save_path(os.path.join(experiment_dir, self_robot_id)),
+        opponent_robot_id: DummyRobotStructure(body_type=dummy_body_type),
     }
 
     return structures
@@ -83,6 +99,7 @@ if __name__ == "__main__":
 
     # load structures
     exp_type = extract_exp_type(args.experiment_dir)
+    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]]
     if exp_type == "coea":
         structures = load_structures_coea(
             args.experiment_dir,
@@ -91,6 +108,8 @@ if __name__ == "__main__":
         )
     elif exp_type == "ppo":
         structures = load_structures_ppo(args.experiment_dir)
+    elif exp_type == "ppo_single":
+        structures = load_structures_ppo_single(args.experiment_dir)
     else:
         raise NotImplementedError("Only coea experiments are supported.")
 

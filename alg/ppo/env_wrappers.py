@@ -135,7 +135,7 @@ class MultiAgentDummyVecEnv:
 
     def step(self, actions: VecActionDict) -> Tuple[VecObsDict, VecRewardDict, VecDoneDict, VecInfoDict]:
 
-        actions_ = [{a: actions[a][env_idx] for a in self.agents} for env_idx in range(self.num_envs)]
+        actions_ = [{key: val[env_idx] for key, val in actions.items()} for env_idx in range(self.num_envs)]
 
         for env_idx in range(self.num_envs):
             observations, rewards, terminations, truncations, infos = self.envs[env_idx].step(actions_[env_idx])
@@ -313,8 +313,8 @@ def make_multi_agent_vec_envs(
     else:
         vec_env = MultiAgentVecNormalize(envs, training, norm_obs, norm_reward)
 
-    for a in vec_env.agents:
-        vec_env.action_space(a).seed(seed)
+    # for a in vec_env.agents:
+    #     vec_env.action_space(a).seed(seed)
 
     return MultiAgentVecPytorch(vec_env, device=device)
 

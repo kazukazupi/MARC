@@ -1,20 +1,17 @@
-import argparse
-import json
-import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import cv2  # type: ignore
 import numpy as np
 import torch
 
-from alg.coea.structure import Structure
+from alg.coea.structure import DummyRobotStructure, Structure
 from alg.ppo.env_wrappers import make_multi_agent_vec_envs
 from alg.ppo.model import Agent
-from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID
+from utils import AGENT_1, AGENT_2, AgentID
 
 
 def evaluate(
-    structures: Dict[AgentID, Structure],
+    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]],
     env_name: str,
     num_processes: int,
     device: torch.device,
@@ -25,6 +22,7 @@ def evaluate(
     movie_path: Optional[str] = None,
 ) -> Dict[str, float]:
 
+    # Create environment
     envs = make_multi_agent_vec_envs(
         env_name,
         num_processes,
@@ -40,13 +38,17 @@ def evaluate(
         render_options=render_options,
     )
 
+    # Load controllers
     agents = {}
     for a, structure in structures.items():
+        if isinstance(structure, DummyRobotStructure):
+            continue
         controller_path = structure.get_latest_controller_path()
         state_dict, obs_rms = torch.load(controller_path, map_location=device)
         agents[a] = Agent.from_state_dict(state_dict)
         envs.obs_rms_dict[a] = obs_rms
 
+    # Initialize episode rewards
     episode_rewards: Dict[str, List[float]] = {a: [] for a in envs.agents}
     observations = envs.reset()
 

@@ -13,7 +13,7 @@ def get_env_name(experiment_dir: str) -> str:
     if extract_exp_type(experiment_dir) == "coea":
         coea_args = load_args(os.path.join(experiment_dir, "metadata"))
         env_name = coea_args.env_name
-    elif extract_exp_type(experiment_dir) == "ppo":
+    elif extract_exp_type(experiment_dir) in ["ppo", "ppo_single"]:
         with open(os.path.join(experiment_dir, "env_info.json"), "r") as f:
             env_info = json.load(f)
         env_name = env_info["env_name"]
@@ -23,7 +23,7 @@ def get_env_name(experiment_dir: str) -> str:
     return env_name
 
 
-def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo"]:
+def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo", "ppo_single"]:
 
     parts = PurePath(experiment_dir).parts
 
@@ -38,6 +38,8 @@ def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo"]:
         return "coea"
     elif parts[idx + 1] == "ppo":
         return "ppo"
+    elif parts[idx + 1] == "ppo_single":
+        return "ppo_single"
     else:
         raise ValueError("The experiment directory path is not valid.")
 

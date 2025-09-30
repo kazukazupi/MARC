@@ -1,14 +1,14 @@
 import argparse
 import glob
 import os
-from typing import Dict, List
+from typing import Dict, List, Union, cast
 
 import cv2
 import numpy as np
 import torch
 from tqdm import tqdm
 
-from alg.coea.structure import Structure
+from alg.coea.structure import DummyRobotStructure, Structure
 from alg.ppo import evaluate
 from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from utils import AgentID
@@ -54,7 +54,7 @@ def write(experiment_dir: str, generations: List[int]):
             movie_dir = os.path.join("analysis", "movies", env_name, "evolution_path")
             os.makedirs(movie_dir, exist_ok=True)
             evaluate(
-                structures,
+                cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures),
                 env_name,
                 num_processes=1,
                 device=torch.device("cpu"),

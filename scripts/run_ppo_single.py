@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from alg.coea.structure import DummyRobotStructure, Structure
-from alg.ppo import train_against_fixed_opponent
+from alg.ppo import train
 from utils import get_args, get_opponent_id
 
 if __name__ == "__main__":
@@ -35,4 +35,4 @@ if __name__ == "__main__":
     self_structure = Structure(os.path.join(save_path, self_robot_id), body, connections)
     opponent_structure = DummyRobotStructure(dummy_body_type)
 
-    train_against_fixed_opponent(args, self_robot_id, self_structure, opponent_structure)
+    train(args, {self_robot_id: self_structure, opponent_robot_id: opponent_structure})

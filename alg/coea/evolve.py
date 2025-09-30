@@ -79,7 +79,7 @@ def evolve(args: argparse.Namespace):
             if num_trainings >= args.max_trainings:
                 break
             structures = {agent_id: populations[agent_id][id] for agent_id, id in match.items()}
-            train(args, structures)
+            train(args, cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures))
             logging.info(f"Trained {match[AGENT_1]} vs {match[AGENT_2]} ({num_trainings+1}/{args.max_trainings})")
             num_trainings += 1
             save_evo_metadata(metadata_dir_path, num_trainings)

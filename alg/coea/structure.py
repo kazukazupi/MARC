@@ -1,7 +1,7 @@
 import glob
 import json
 import os
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 import numpy as np
 from evogym import draw, get_full_connectivity, get_uniform, has_actuator, hashable, is_connected  # type: ignore
@@ -107,3 +107,39 @@ def mutate(
             return Structure(child_save_path, body, connections)
 
     return None
+
+
+class DummyRobotStructure:
+
+    def __init__(self, body_type: Literal["rigid_4x4", "soft_4x4", "rigid_5x5", "soft_5x5"]):
+
+        self.body_type = body_type
+
+        if body_type == "rigid_4x4":
+            self.body = np.array(
+                [
+                    [0, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 0],
+                ]
+            )
+        elif body_type == "soft_4x4":
+            self.body = np.array(
+                [
+                    [0, 0, 0, 0, 0],
+                    [2, 2, 2, 2, 0],
+                    [2, 2, 2, 2, 0],
+                    [2, 2, 2, 2, 0],
+                    [2, 2, 2, 2, 0],
+                ]
+            )
+        elif body_type == "rigid_5x5":
+            self.body = np.ones((5, 5))
+        elif body_type == "soft_5x5":
+            self.body = np.full((5, 5), 2)
+        else:
+            raise ValueError(f"Invalid body_type: {body_type}")
+
+        self.connections = get_full_connectivity(self.body)

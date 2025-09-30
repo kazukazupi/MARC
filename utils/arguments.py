@@ -5,6 +5,8 @@ import warnings
 
 import torch
 
+from utils.agent_id import AGENT_1, AGENT_2
+
 
 def get_args() -> argparse.Namespace:
 
@@ -15,6 +17,18 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--exp-dirname", type=str, default="log", help="directory name to save models")
     parser.add_argument("--seed", type=int, default=None, help="random seed")
     parser.add_argument("--is-continue", action="store_true", help="continue training from a saved model")
+
+    # Dummy Robot Specification
+    parser.add_argument(
+        "--dummy-target", choices=[AGENT_1, AGENT_2], default=AGENT_2, help="which agent is the dummy robot"
+    )
+    parser.add_argument(
+        "--dummy-body-type",
+        type=str,
+        choices=["rigid_4x4", "soft_4x4", "rigid_5x5", "soft_5x5"],
+        default="soft_4x4",
+        help="type of dummy robot",
+    )
 
     # Coevolution Hyperparameters
     parser.add_argument("--pop-size", type=int, default=25, help="population size")

@@ -6,9 +6,8 @@ from typing import Dict, List
 
 import numpy as np
 import torch
-from evogym import get_full_connectivity  # type: ignore
 
-from alg.coea.structure import Structure
+from alg.coea.structure import DummyRobotStructure, Structure
 from alg.ppo.env_wrappers import MultiAgentVecPytorch, make_multi_agent_vec_envs, make_single_agent_vec_env
 from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
@@ -166,14 +165,22 @@ def train(
 
 def train_against_fixed_opponent(
     args: argparse.Namespace,
-    self_structure: Structure,
     agent_id: AgentID,
+    self_structure: Structure,
+    opponent_structure: DummyRobotStructure,
 ):
 
     assert not self_structure.is_trained, "already trained."
 
-    opponent_body = np.ones_like(self_structure.body) * 2
-    opponent_connections = get_full_connectivity(opponent_body)
+    # Set structures
+    body_1 = self_structure.body
+    body_2 = opponent_structure.body
+    connections_1 = self_structure.connections
+    connections_2 = opponent_structure.connections
+
+    if agent_id == AGENT_2:
+        body_1, body_2 = body_2, body_1
+        connections_1, connections_2 = connections_2, connections_1
 
     # Initialize environment
     vec_env = make_single_agent_vec_env(
@@ -182,10 +189,10 @@ def train_against_fixed_opponent(
         args.gamma,
         args.device,
         agent_id,
-        body_1=self_structure.body,
-        body_2=opponent_body,
-        connections_1=self_structure.connections,
-        connections_2=opponent_connections,
+        body_1=body_1,
+        body_2=body_2,
+        connections_1=connections_1,
+        connections_2=connections_2,
     )
 
     # Create agent

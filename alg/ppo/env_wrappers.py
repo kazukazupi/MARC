@@ -7,7 +7,6 @@ import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 from stable_baselines3.common.vec_env import VecNormalize  # type: ignore
 
-from alg.ppo.model import Agent
 from envs import make
 from envs.base import MultiAgentEvoGymBase
 from envs.typehints import ActionDict, ObsDict, ObsType
@@ -24,47 +23,6 @@ VecPtActionDict = Dict[AgentID, torch.Tensor]
 VecPtRewardDict = Dict[AgentID, torch.Tensor]
 VecPtDoneDict = Dict[AgentID, torch.Tensor]
 VecPtInfoDict = VecInfoDict
-
-
-class FixedOpponentEnv(gym.Env):
-
-    def __init__(self, env: MultiAgentEvoGymBase, agent_id: AgentID, opponent: Optional[Agent] = None):
-
-        self.env = env
-        self.agent_id = agent_id
-        self.opponent = opponent
-
-        self.observation_space = self.env.observation_space(agent_id)
-        self.action_space = self.env.action_space(agent_id)
-
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
-
-        if self.opponent is None:
-            ret = self.env.step({self.agent_id: action})
-        else:
-            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
-
-        return (
-            ret[0][self.agent_id],
-            ret[1][self.agent_id],
-            ret[2][self.agent_id],
-            ret[3][self.agent_id],
-            ret[4][self.agent_id],
-        )
-
-    def reset(
-        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
-    ) -> Tuple[np.ndarray, Dict[str, Any]]:
-
-        if self.opponent is None:
-            ret = self.env.reset(seed=seed, options=options)
-        else:
-            raise NotImplementedError("FixedOpponentEnv with opponent model is not implemented yet.")
-
-        return ret[0][self.agent_id], ret[1][self.agent_id]
-
-    def render(self):
-        return self.env.render()
 
 
 class VecPytorch:

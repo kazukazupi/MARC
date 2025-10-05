@@ -83,7 +83,7 @@ def evolve_single(args: argparse.Namespace):
                 opponent_robot_id: opponent_structure,
             }
             train(args, cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures))
-            logging.info(f"Trained {self_robot_id} robot_id={robot_id} ({num_trainings+1}/{args.max_trainings})")
+            logging.info(f"Trained {robot_id} ({num_trainings+1}/{args.max_trainings})")
             num_trainings += 1
             save_evo_metadata(metadata_dir_path, num_trainings)
 
@@ -102,7 +102,7 @@ def evolve_single(args: argparse.Namespace):
             dummy_opponent_id = -1
 
             if population[robot_id].has_fought(dummy_opponent_id):
-                logging.info(f"Skipped evaluation {self_robot_id} robot_id={robot_id} (already fought dummy)")
+                logging.info(f"Skipped evaluation {robot_id} (already fought dummy)")
                 continue
 
             results = evaluate(
@@ -115,7 +115,7 @@ def evolve_single(args: argparse.Namespace):
             )
 
             population.set_score(robot_id, dummy_opponent_id, results[self_robot_id])
-            logging.info(f"Evaluated {self_robot_id} robot_id={robot_id} score={results[self_robot_id]:.3f}")
+            logging.info(f"Evaluated {robot_id} ({results[self_robot_id]:.3f})")
 
         population.dump_fitnesses()
 

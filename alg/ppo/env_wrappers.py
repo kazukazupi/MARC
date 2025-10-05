@@ -5,7 +5,7 @@ import gymnasium as gym  # type: ignore
 import numpy as np
 import torch
 from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize  # type: ignore
+from stable_baselines3.common.vec_env import VecNormalize  # type: ignore
 
 from alg.ppo.model import Agent
 from envs import make
@@ -317,40 +317,3 @@ def make_multi_agent_vec_envs(
     #     vec_env.action_space(a).seed(seed)
 
     return MultiAgentVecPytorch(vec_env, device=device)
-
-
-def make_single_agent_vec_env(
-    env_name: str,
-    num_processes: int,
-    gamma: Optional[float],
-    device: torch.device,
-    agent_id: AgentID,
-    opponent: Optional[Agent] = None,
-    training: bool = True,
-    norm_obs: bool = True,
-    norm_reward: bool = True,
-    seed: Optional[int] = None,
-    **env_kwargs: Any,
-) -> VecPytorch:
-
-    def _thunk():
-        env = make(env_name, **env_kwargs)
-        env = FixedOpponentEnv(env, agent_id, opponent)
-        return env
-
-    if num_processes != 1:
-        raise NotImplementedError("Only one process is supported for now.")
-
-    envs = [_thunk for _ in range(num_processes)]
-
-    venv = DummyVecEnv(envs)
-
-    vec_norm = VecNormalize(
-        venv,
-        training=training,
-        norm_obs=norm_obs,
-        norm_reward=norm_reward,
-        gamma=gamma if gamma is not None else 0.99,
-    )
-
-    return VecPytorch(vec_norm, device=device)

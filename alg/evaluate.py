@@ -5,8 +5,9 @@ import numpy as np
 import torch
 
 from alg.coea.structure import DummyRobotStructure, Structure
-from alg.ppo.env_wrappers import make_multi_agent_vec_envs
-from alg.ppo.model import Agent
+from alg.controller import Controller
+from alg.ppo.controller import AgentController
+from alg.ppo.env_wrappers import MultiAgentVecNormalize, make_multi_agent_vec_envs
 from utils import AGENT_1, AGENT_2, AgentID
 
 
@@ -21,9 +22,38 @@ def evaluate(
     render_options: Optional[Dict[str, Any]] = None,
     movie_path: Optional[str] = None,
 ) -> Dict[str, float]:
+    """
+    制御器を評価する関数
 
-    # Create environment
-    envs = make_multi_agent_vec_envs(
+    Parameters
+    ----------
+    structures : Dict[AgentID, Union[Structure, DummyRobotStructure]]
+        各エージェントの構造
+    env_name : str
+        環境名
+    num_processes : int
+        並列環境数
+    device : torch.device
+        制御器のロード時に使用するデバイス
+    min_num_episodes : int
+        最小エピソード数
+    seed : Optional[int]
+        シード値
+    render_mode : Optional[str]
+        レンダリングモード
+    render_options : Optional[Dict[str, Any]]
+        レンダリングオプション
+    movie_path : Optional[str]
+        動画の保存先パス
+
+    Returns
+    -------
+    Dict[str, float]
+        各エージェントの評価スコア
+    """
+
+    # Create environment (numpy-based)
+    envs: MultiAgentVecNormalize = make_multi_agent_vec_envs(
         env_name,
         num_processes,
         None,
@@ -36,16 +66,18 @@ def evaluate(
         connections_2=structures[AGENT_2].connections,
         render_mode=render_mode,
         render_options=render_options,
+        use_pytorch_wrapper=False,  # numpy-based environment
     )
 
-    # Load controllers
-    agents = {}
+    # Load controllers using Controller interface
+    controllers: Dict[AgentID, Controller] = {}
     for a, structure in structures.items():
         if isinstance(structure, DummyRobotStructure):
             continue
         controller_path = structure.get_latest_controller_path()
-        state_dict, obs_rms = torch.load(controller_path, map_location=device)
-        agents[a] = Agent.from_state_dict(state_dict)
+        # Load PPO agent using AgentController wrapper
+        controller, obs_rms = AgentController.from_file(controller_path, device)
+        controllers[a] = controller
         envs.obs_rms_dict[a] = obs_rms
 
     # Initialize episode rewards
@@ -71,14 +103,13 @@ def evaluate(
                 writer = cv2.VideoWriter(movie_path, fourcc, fps, frame_size)
             writer.write(frame)
 
-        # set actions
+        # set actions using Controller interface (numpy-based)
         actions = {}
-        for a, agent in agents.items():
-            with torch.no_grad():
-                _, action, _ = agent.act(observations[a], deterministic=True)
+        for a, controller in controllers.items():
+            action = controller.act(observations[a], deterministic=True)
             actions[a] = action
 
-        # step
+        # step (numpy-based)
         observations, _, _, infos = envs.step(actions)
 
         # reward

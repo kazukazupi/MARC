@@ -77,7 +77,7 @@ class AgentController(Controller):
         obs_rms : RunningMeanStd
             観測値の正規化統計量
         """
-        state_dict, obs_rms = torch.load(path, map_location=device, weights_only=False)
+        state_dict, obs_rms = torch.load(path, map_location=device)
         agent = Agent.from_state_dict(state_dict)
         agent.to(device)
         agent.eval()  # 評価モードに設定

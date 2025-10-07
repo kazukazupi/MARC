@@ -25,7 +25,14 @@ class Structure:
         metadata: 訓練状態、死亡フラグ、評価スコアを含むメタデータ
     """
 
-    def __init__(self, save_path: str, body: np.ndarray, connections: np.ndarray, save: bool = True):
+    def __init__(
+        self,
+        save_path: str,
+        body: np.ndarray,
+        connections: np.ndarray,
+        save: bool = True,
+        controller_type: Literal["ppo", "neat"] = "ppo",
+    ):
         """ロボット構造を初期化する。
 
         Args:
@@ -34,6 +41,7 @@ class Structure:
             connections: ボクセル間の接続を表す配列
             save: Trueの場合、ディレクトリを作成してデータを保存
                   Falseの場合、既存のメタデータを読み込む
+            controller_type: 使用する制御器のタイプ（"ppo", "neat"）
         """
 
         self.save_path = save_path
@@ -44,7 +52,7 @@ class Structure:
             os.mkdir(self.save_path)
             np.save(os.path.join(self.save_path, "body.npy"), body)
             np.save(os.path.join(self.save_path, "connections.npy"), connections)
-            self.metadata = StructureMetadata(is_trained=False, is_died=False)
+            self.metadata = StructureMetadata(is_trained=False, is_died=False, controller_type=controller_type)
             self.dump_metadata()
         else:
             with open(os.path.join(self.save_path, "metadata.json"), "r") as f:
@@ -60,7 +68,14 @@ class Structure:
         Raises:
             AssertionError: コントローラファイルが見つからない場合
         """
-        controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
+        if self.metadata.controller_type == "ppo":
+            pattern = "controller_*.pt"
+        elif self.metadata.controller_type == "neat":
+            pattern = "neat-checkpoint-*"
+        else:
+            raise ValueError(f"Unknown controller type: {self.metadata.controller_type}")
+
+        controller_paths = sorted(glob.glob(os.path.join(self.save_path, pattern)))
         assert controller_paths, f"Controller for {self.save_path} is not found."
         return max(controller_paths, key=os.path.getctime)
 
@@ -83,6 +98,12 @@ class Structure:
             from alg.ppo.controller import AgentController
 
             return AgentController.from_file(controller_path, device=device)
+        elif self.metadata.controller_type == "neat":
+            from alg.neat.controller import NEATController
+
+            # NEAT config path (デフォルト)
+            config_path = os.path.join(os.path.dirname(__file__), "..", "neat", "config", "neat.cfg")
+            return NEATController.from_file(controller_path, config_path=config_path)
         else:
             raise ValueError(f"Unknown controller type: {self.metadata.controller_type}")
 

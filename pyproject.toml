@@ -23,6 +23,7 @@ pyproject-flake8 = "^7.0.0"
 stable-baselines3 = "2.0.0"
 seaborn = "^0.13.2"
 pydantic = "^2.10.6"
+neat-python = "^0.92"
 
 [tool.black]
 line-length = 119

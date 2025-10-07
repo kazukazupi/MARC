@@ -6,7 +6,6 @@ import torch
 
 from alg.coea.structure import DummyRobotStructure, Structure
 from alg.controller import Controller
-from alg.ppo.controller import AgentController
 from alg.ppo.env_wrappers import MultiAgentVecNormalize, make_multi_agent_vec_envs
 from utils import AGENT_1, AGENT_2, AgentID
 
@@ -74,9 +73,7 @@ def evaluate(
     for a, structure in structures.items():
         if isinstance(structure, DummyRobotStructure):
             continue
-        controller_path = structure.get_latest_controller_path()
-        # Load PPO agent using AgentController wrapper
-        controller, obs_rms = AgentController.from_file(controller_path, device)
+        controller, obs_rms = structure.create_controller(device)
         controllers[a] = controller
         envs.obs_rms_dict[a] = obs_rms
 

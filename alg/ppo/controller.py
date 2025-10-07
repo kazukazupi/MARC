@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
+from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
 from alg.controller import Controller
 from alg.ppo.model import Agent
@@ -59,7 +60,7 @@ class AgentController(Controller):
         return action.cpu().numpy()
 
     @classmethod
-    def from_file(cls, path: str, device: torch.device = torch.device("cpu")) -> Tuple["AgentController", object]:
+    def from_file(cls, path: str, **kwargs) -> Tuple["AgentController", RunningMeanStd]:
         """
         ファイルからAgentControllerをロードする（Controllerインターフェース実装）
 
@@ -67,8 +68,8 @@ class AgentController(Controller):
         ----------
         path : str
             保存されたモデルのパス
-        device : torch.device, optional
-            使用するデバイス, by default torch.device("cpu")
+        **kwargs : dict
+            device (torch.device, optional): 使用するデバイス, by default torch.device("cpu")
 
         Returns
         -------
@@ -77,6 +78,7 @@ class AgentController(Controller):
         obs_rms : RunningMeanStd
             観測値の正規化統計量
         """
+        device = kwargs.get("device", torch.device("cpu"))
         state_dict, obs_rms = torch.load(path, map_location=device)
         agent = Agent.from_state_dict(state_dict)
         agent.to(device)

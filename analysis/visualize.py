@@ -108,10 +108,10 @@ if __name__ == "__main__":
         )
     elif exp_type == "ppo":
         structures = load_structures_ppo(args.experiment_dir)
-    elif exp_type == "ppo_single":
+    elif exp_type in ["ppo_single", "neat_single"]:
         structures = load_structures_ppo_single(args.experiment_dir)
     else:
-        raise NotImplementedError("Only coea experiments are supported.")
+        raise NotImplementedError(f"Unsupported experiment type: {exp_type}")
 
     env_name = get_env_name(args.experiment_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

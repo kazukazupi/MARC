@@ -68,7 +68,14 @@ class Structure:
         Raises:
             AssertionError: コントローラファイルが見つからない場合
         """
-        controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
+        if self.metadata.controller_type == "ppo":
+            pattern = "controller_*.pt"
+        elif self.metadata.controller_type == "neat":
+            pattern = "neat-checkpoint-*"
+        else:
+            raise ValueError(f"Unknown controller type: {self.metadata.controller_type}")
+
+        controller_paths = sorted(glob.glob(os.path.join(self.save_path, pattern)))
         assert controller_paths, f"Controller for {self.save_path} is not found."
         return max(controller_paths, key=os.path.getctime)
 
@@ -91,6 +98,12 @@ class Structure:
             from alg.ppo.controller import AgentController
 
             return AgentController.from_file(controller_path, device=device)
+        elif self.metadata.controller_type == "neat":
+            from alg.neat.controller import NEATController
+
+            # NEAT config path (デフォルト)
+            config_path = os.path.join(os.path.dirname(__file__), "..", "neat", "config", "neat.cfg")
+            return NEATController.from_file(controller_path, config_path=config_path)
         else:
             raise ValueError(f"Unknown controller type: {self.metadata.controller_type}")
 

@@ -10,7 +10,7 @@ import seaborn as sns  # type: ignore
 import torch
 
 from alg.coea.structure import Structure
-from alg.ppo import evaluate
+from alg.evaluate import evaluate
 from analysis.analysis_utils import get_max_generation, get_robot_save_path, get_top_robot_ids
 from utils import AGENT_1, AGENT_2
 

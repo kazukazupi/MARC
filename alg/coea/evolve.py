@@ -2,13 +2,13 @@ import argparse
 import logging
 import math
 import os
-from typing import Dict, List, Union, cast
+from typing import Dict, List
 
 import torch
 
 from alg.coea.coea_utils import get_matches, get_percent_survival_evals, load_evo_metadata, save_evo_metadata
 from alg.coea.population import Population
-from alg.coea.structure import DummyRobotStructure, Structure
+from alg.coea.structure import BaseRobotStructure, Structure
 from alg.ppo import evaluate, train
 from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID, get_opponent_id, load_args, save_args
 
@@ -78,8 +78,10 @@ def evolve(args: argparse.Namespace):
         for match in matches:
             if num_trainings >= args.max_trainings:
                 break
-            structures = {agent_id: populations[agent_id][id] for agent_id, id in match.items()}
-            train(args, cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures))
+            structures: Dict[AgentID, BaseRobotStructure] = {
+                agent_id: populations[agent_id][id] for agent_id, id in match.items()
+            }
+            train(args, structures)
             logging.info(f"Trained {match[AGENT_1]} vs {match[AGENT_2]} ({num_trainings+1}/{args.max_trainings})")
             num_trainings += 1
             save_evo_metadata(metadata_dir_path, num_trainings)
@@ -98,13 +100,18 @@ def evolve(args: argparse.Namespace):
         for match in matches:
             structures = {agent_id: populations[agent_id][id] for agent_id, id in match.items()}
 
-            if structures[AGENT_1].has_fought(match[AGENT_2]):
-                assert structures[AGENT_2].has_fought(match[AGENT_1])
+            structure1 = structures[AGENT_1]
+            structure2 = structures[AGENT_2]
+            assert isinstance(structure1, Structure)
+            assert isinstance(structure2, Structure)
+
+            if structure1.has_fought(match[AGENT_2]):
+                assert structure2.has_fought(match[AGENT_1])
                 logging.info(f"Skipped evaluation {match[AGENT_1]} vs {match[AGENT_2]} (already fought)")
                 continue
 
             results = evaluate(
-                cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures),
+                structures,
                 args.env_name,
                 num_processes=1,
                 device=torch.device("cpu"),

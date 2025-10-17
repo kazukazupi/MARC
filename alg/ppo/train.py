@@ -2,11 +2,11 @@ import argparse
 import csv
 import os
 import random
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import torch
 
-from alg.coea.structure import DummyRobotStructure, Structure
+from alg.coea.structure import BaseRobotStructure, DummyRobotStructure, Structure
 from alg.ppo.env_wrappers import MultiAgentVecPytorch, make_multi_agent_vec_envs
 from alg.ppo.model import Agent
 from alg.ppo.ppo import PPO
@@ -17,7 +17,7 @@ from utils import AGENT_1, AGENT_2, AGENT_IDS, AgentID, get_opponent_id
 
 def train(
     args: argparse.Namespace,
-    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]],
+    structures: Dict[AgentID, BaseRobotStructure],
 ):
 
     for s in structures.values():
@@ -38,6 +38,7 @@ def train(
         structure = structures[a]
         if isinstance(structure, DummyRobotStructure):
             continue
+        assert isinstance(structure, Structure)
 
         o = get_opponent_id(a)
 
@@ -113,6 +114,7 @@ def train(
             structure = structures[a]
             if isinstance(structure, DummyRobotStructure):
                 continue
+            assert isinstance(structure, Structure)
             o = get_opponent_id(a)
 
             update_linear_schedule(updaters[a].optimizer, j, args.num_updates, args.lr)
@@ -174,4 +176,5 @@ def train(
         structure = structures[a]
         if isinstance(structure, DummyRobotStructure):
             continue
+        assert isinstance(structure, Structure)
         structure.is_trained = True

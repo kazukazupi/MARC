@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+from abc import ABC
 from typing import Dict, Literal, Optional
 
 import numpy as np
@@ -9,7 +10,19 @@ from evogym import draw, get_full_connectivity, get_uniform, has_actuator, hasha
 from alg.coea.coea_utils import StructureMetadata
 
 
-class Structure:
+class BaseRobotStructure(ABC):
+    """ロボット構造の抽象基底クラス。
+
+    全てのロボット構造が持つべき基本的なインターフェースを定義する。
+    サブクラスは `body` (np.ndarray) と `connections` (np.ndarray) 属性を
+    持つ必要がある。
+    """
+
+    body: np.ndarray
+    connections: np.ndarray
+
+
+class Structure(BaseRobotStructure):
     """ロボットの形態と訓練状態を表すクラス。
 
     このクラスはロボットの物理的な構造（body と connections）と、
@@ -209,7 +222,7 @@ def mutate(
     return None
 
 
-class DummyRobotStructure:
+class DummyRobotStructure(BaseRobotStructure):
     """固定された形態を持つダミーロボット構造。
 
     このクラスは進化しない固定の対戦相手として使用される。
@@ -218,8 +231,6 @@ class DummyRobotStructure:
 
     Attributes:
         body_type: ロボット形態のタイプ
-        body: ロボットの形態を表すnumpy配列
-        connections: ボクセル間の接続を表すnumpy配列
     """
 
     def __init__(self, body_type: Literal["rigid_4x4", "soft_4x4", "rigid_5x5", "soft_5x5"]):

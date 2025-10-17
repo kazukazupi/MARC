@@ -1,17 +1,17 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import cv2  # type: ignore
 import numpy as np
 import torch
 
-from alg.coea.structure import DummyRobotStructure, Structure
+from alg.coea.structure import BaseRobotStructure, DummyRobotStructure, Structure
 from alg.ppo.env_wrappers import make_multi_agent_vec_envs
 from alg.ppo.model import Agent
 from utils import AGENT_1, AGENT_2, AgentID
 
 
 def evaluate(
-    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]],
+    structures: Dict[AgentID, BaseRobotStructure],
     env_name: str,
     num_processes: int,
     device: torch.device,
@@ -43,6 +43,7 @@ def evaluate(
     for a, structure in structures.items():
         if isinstance(structure, DummyRobotStructure):
             continue
+        assert isinstance(structure, Structure)
         controller_path = structure.get_latest_controller_path()
         state_dict, obs_rms = torch.load(controller_path, map_location=device)
         agents[a] = Agent.from_state_dict(state_dict)

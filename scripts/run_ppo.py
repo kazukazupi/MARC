@@ -1,10 +1,10 @@
 import json
 import os
-from typing import Dict, Union
+from typing import Dict
 
 import numpy as np
 
-from alg.coea.structure import DummyRobotStructure, Structure
+from alg.coea.structure import BaseRobotStructure, Structure
 from alg.ppo import train
 from utils import AGENT_IDS, AgentID, get_args
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
             indent=2,
         )
 
-    structures: Dict[AgentID, Union[Structure, DummyRobotStructure]] = {}
+    structures: Dict[AgentID, BaseRobotStructure] = {}
     for a in AGENT_IDS:
         body = np.load(os.path.join("./hand_designed_robots", args.env_name, a, "body.npy"))
         connections = np.load(os.path.join("./hand_designed_robots", args.env_name, a, "connections.npy"))

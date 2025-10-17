@@ -2,13 +2,13 @@ import argparse
 import logging
 import math
 import os
-from typing import Dict, Union, cast
+from typing import Dict
 
 import torch
 
 from alg.coea.coea_utils import get_percent_survival_evals, load_evo_metadata, save_evo_metadata
 from alg.coea.population import Population
-from alg.coea.structure import DummyRobotStructure, Structure
+from alg.coea.structure import BaseRobotStructure, DummyRobotStructure, Structure
 from alg.ppo import evaluate, train
 from utils import AgentID, get_opponent_id, load_args, save_args
 
@@ -78,11 +78,11 @@ def evolve_single(args: argparse.Namespace):
             if num_trainings >= args.max_trainings:
                 break
 
-            structures = {
+            structures: Dict[AgentID, BaseRobotStructure] = {
                 self_robot_id: population[robot_id],
                 opponent_robot_id: opponent_structure,
             }
-            train(args, cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures))
+            train(args, structures)
             logging.info(f"Trained {robot_id} ({num_trainings+1}/{args.max_trainings})")
             num_trainings += 1
             save_evo_metadata(metadata_dir_path, num_trainings)
@@ -97,16 +97,19 @@ def evolve_single(args: argparse.Namespace):
                 opponent_robot_id: opponent_structure,
             }
 
+            structure_self = structures[self_robot_id]
+            assert isinstance(structure_self, Structure)
+
             # Since we're fighting against a dummy, we use a simple opponent_id for tracking
             # We use -1 to indicate dummy opponent
             dummy_opponent_id = -1
 
-            if population[robot_id].has_fought(dummy_opponent_id):
+            if structure_self.has_fought(dummy_opponent_id):
                 logging.info(f"Skipped evaluation {robot_id} (already fought dummy)")
                 continue
 
             results = evaluate(
-                cast(Dict[AgentID, Union[Structure, DummyRobotStructure]], structures),
+                structures,
                 args.env_name,
                 num_processes=1,
                 device=torch.device("cpu"),

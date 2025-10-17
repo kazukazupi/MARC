@@ -1,15 +1,12 @@
 import glob
 import json
 import os
-from typing import Dict, Literal, Optional, Tuple
+from typing import Dict, Literal, Optional
 
 import numpy as np
-import torch
 from evogym import draw, get_full_connectivity, get_uniform, has_actuator, hashable, is_connected  # type: ignore
-from stable_baselines3.common.running_mean_std import RunningMeanStd  # type: ignore
 
 from alg.coea.coea_utils import StructureMetadata
-from alg.controller import Controller
 
 
 class Structure:
@@ -63,28 +60,6 @@ class Structure:
         controller_paths = sorted(glob.glob(os.path.join(self.save_path, "controller_*.pt")))
         assert controller_paths, f"Controller for {self.save_path} is not found."
         return max(controller_paths, key=os.path.getctime)
-
-    def create_controller(self, device: torch.device) -> Tuple[Controller, RunningMeanStd]:
-        """保存パスから最新のControllerインスタンスを作成する。
-
-        Args:
-            device: 制御器のロード時に使用するデバイス
-
-        Returns:
-            controller: ロードされた制御器インスタンス
-            normalization_stats: 正規化統計量（obs_rmsなど）
-
-        Raises:
-            ValueError: 未知のcontroller_typeが指定された場合
-        """
-        controller_path = self.get_latest_controller_path()
-
-        if self.metadata.controller_type == "ppo":
-            from alg.ppo.controller import AgentController
-
-            return AgentController.from_file(controller_path, device=device)
-        else:
-            raise ValueError(f"Unknown controller type: {self.metadata.controller_type}")
 
     @classmethod
     def from_save_path(cls, save_path: str) -> "Structure":

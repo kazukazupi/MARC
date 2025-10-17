@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 
 from alg.coea.structure import DummyRobotStructure, Structure
-from alg.evaluate import evaluate
+from alg.ppo import evaluate
 from analysis.analysis_utils import get_env_name, get_robot_save_path, get_top_robot_ids
 from utils import AgentID
 

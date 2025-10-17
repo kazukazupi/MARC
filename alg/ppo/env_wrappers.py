@@ -253,41 +253,8 @@ def make_multi_agent_vec_envs(
     norm_obs: bool = True,
     norm_reward: bool = True,
     seed: Optional[int] = None,
-    use_pytorch_wrapper: bool = True,
     **env_kwargs: Any,
 ):
-    """
-    マルチエージェント用のベクトル化環境を作成する
-
-    Parameters
-    ----------
-    env_name : str
-        環境名
-    num_processes : int
-        並列環境数
-    gamma : Optional[float]
-        割引率（training時に必要）
-    device : torch.device
-        使用するデバイス（use_pytorch_wrapper=Trueの時のみ使用）
-    training : Union[bool, Dict[AgentID, bool]]
-        訓練モードかどうか
-    norm_obs : bool
-        観測値を正規化するか
-    norm_reward : bool
-        報酬を正規化するか
-    seed : Optional[int]
-        シード値（未実装）
-    use_pytorch_wrapper : bool
-        PyTorchラッパーを使用するか（学習時はTrue、評価時はFalse推奨）
-    **env_kwargs : Any
-        環境固有のパラメータ
-
-    Returns
-    -------
-    Union[MultiAgentVecPytorch, MultiAgentVecNormalize]
-        use_pytorch_wrapper=True: MultiAgentVecPytorch (torch.Tensorベース)
-        use_pytorch_wrapper=False: MultiAgentVecNormalize (numpy.ndarrayベース)
-    """
 
     def _thunk():
         env = make(env_name, **env_kwargs)
@@ -307,7 +274,4 @@ def make_multi_agent_vec_envs(
     # for a in vec_env.agents:
     #     vec_env.action_space(a).seed(seed)
 
-    if use_pytorch_wrapper:
-        return MultiAgentVecPytorch(vec_env, device=device)
-    else:
-        return vec_env
+    return MultiAgentVecPytorch(vec_env, device=device)

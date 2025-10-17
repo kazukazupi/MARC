@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Union
 import torch
 
 from alg.coea.structure import DummyRobotStructure, Structure
-from alg.evaluate import evaluate
+from alg.ppo import evaluate
 from analysis.analysis_utils import extract_exp_type, get_env_name, get_robot_save_path, get_top_robot_ids
 from utils import AGENT_IDS, AgentID, get_opponent_id
 

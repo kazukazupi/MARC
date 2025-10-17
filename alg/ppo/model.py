@@ -37,15 +37,6 @@ class Agent(nn.Module):
             観測値
         deterministic : bool, optional
             確定的方策を用いるかどうか, by default False
-
-        Returns
-        -------
-        value : Tensor
-            状態価値関数の出力
-        action : Tensor
-            行動
-        action_log_probs : Tensor
-            行動の対数確率
         """
         value, actor_features = self.base(inputs)
         normal_dist: FixedNormal = self.dist(actor_features)

@@ -61,7 +61,6 @@ class StructureMetadata(BaseModel):
     is_trained: bool
     is_died: bool
     scores: Dict[int, float] = {}
-    controller_type: str = "ppo"
 
 
 class MatchMetadata(BaseModel):

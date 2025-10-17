@@ -10,7 +10,7 @@ from utils import load_args
 
 def get_env_name(experiment_dir: str) -> str:
 
-    if extract_exp_type(experiment_dir) == "coea":
+    if extract_exp_type(experiment_dir) in ["coea", "coea_single"]:
         coea_args = load_args(os.path.join(experiment_dir, "metadata"))
         env_name = coea_args.env_name
     elif extract_exp_type(experiment_dir) in ["ppo", "ppo_single"]:
@@ -18,12 +18,12 @@ def get_env_name(experiment_dir: str) -> str:
             env_info = json.load(f)
         env_name = env_info["env_name"]
     else:
-        raise NotImplementedError("Only coea experiments are supported.")
+        raise NotImplementedError(f"Experiment type '{extract_exp_type(experiment_dir)}' is not supported.")
 
     return env_name
 
 
-def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo", "ppo_single"]:
+def extract_exp_type(experiment_dir: str) -> Literal["coea", "coea_single", "ppo", "ppo_single"]:
 
     parts = PurePath(experiment_dir).parts
 
@@ -36,12 +36,14 @@ def extract_exp_type(experiment_dir: str) -> Literal["coea", "ppo", "ppo_single"
 
     if parts[idx + 1] == "coea":
         return "coea"
+    elif parts[idx + 1] == "coea_single":
+        return "coea_single"
     elif parts[idx + 1] == "ppo":
         return "ppo"
     elif parts[idx + 1] == "ppo_single":
         return "ppo_single"
     else:
-        raise ValueError("The experiment directory path is not valid.")
+        raise ValueError(f"Unknown experiment type: {parts[idx + 1]}")
 
 
 def get_top_robot_ids(csv_path: str, top_n: int = 1, generation: Optional[int] = None) -> List[int]:

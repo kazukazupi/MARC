@@ -8,7 +8,7 @@ import torch
 from alg.coea.structure import BaseRobotStructure, DummyRobotStructure, Structure
 from alg.ppo import evaluate
 from analysis.analysis_utils import extract_exp_type, get_env_name, get_robot_save_path, get_top_robot_ids
-from utils import AGENT_IDS, AgentID, get_opponent_id
+from utils import AGENT_IDS, AgentID, get_opponent_id, load_args
 
 
 def load_structures_coea(
@@ -49,6 +49,35 @@ def load_structures_ppo(experiment_dir: str):
 
     structures: Dict[AgentID, Structure] = {
         a: Structure.from_save_path(os.path.join(experiment_dir, a)) for a in AGENT_IDS
+    }
+
+    return structures
+
+
+def load_structures_coea_single(
+    experiment_dir: str,
+    generation: Optional[int] = None,
+    id: Optional[int] = None,
+):
+
+    # Load args from metadata
+    metadata_dir_path = os.path.join(experiment_dir, "metadata")
+    args = load_args(metadata_dir_path)
+
+    # Determine agent IDs
+    opponent_robot_id: AgentID = args.dummy_target
+    self_robot_id: AgentID = get_opponent_id(opponent_robot_id)
+
+    # Load self robot structure
+    csv_path = os.path.join(experiment_dir, self_robot_id, "fitnesses.csv")
+    if id is None:
+        id = get_top_robot_ids(csv_path, generation=generation)[0]
+    save_path = get_robot_save_path(os.path.join(experiment_dir, self_robot_id), id, generation)
+    print(f"Loading {save_path}")
+
+    structures: Dict[AgentID, BaseRobotStructure] = {
+        self_robot_id: Structure.from_save_path(save_path),
+        opponent_robot_id: DummyRobotStructure(body_type=args.dummy_body_type),
     }
 
     return structures
@@ -106,12 +135,20 @@ if __name__ == "__main__":
             generations=args.generations,
             ids=args.id,
         )
+    elif exp_type == "coea_single":
+        generation = args.generations[0] if args.generations else None
+        id = args.id[0] if args.id else None
+        structures = load_structures_coea_single(
+            args.experiment_dir,
+            generation=generation,
+            id=id,
+        )
     elif exp_type == "ppo":
         structures = load_structures_ppo(args.experiment_dir)
     elif exp_type == "ppo_single":
         structures = load_structures_ppo_single(args.experiment_dir)
     else:
-        raise NotImplementedError("Only coea experiments are supported.")
+        raise NotImplementedError(f"Experiment type '{exp_type}' is not supported.")
 
     env_name = get_env_name(args.experiment_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

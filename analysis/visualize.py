@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import torch
 
@@ -11,110 +11,97 @@ from analysis.analysis_utils import extract_exp_type, get_env_name, get_robot_sa
 from utils import AGENT_IDS, AgentID, get_opponent_id, load_args
 
 
-def load_structures_coea(
+def load_structure_coea(
     experiment_dir: str,
-    generations: Optional[List[Optional[int]]] = None,
-    ids: Optional[List[int]] = None,
-):
-
-    # Process generations, ids
-    if generations is None:
-        generations = [None] * 2
-    elif len(generations) == 1:
-        generations = generations * 2
-    elif len(generations) == 2:
-        pass
-    else:
-        raise ValueError("Invalid number of generations.")
-
-    if ids is not None:
-        assert len(ids) == 2, "The number of ids must match the number of agents."
-
-    # Load structures
-    structures: Dict[AgentID, Structure] = {}
-    for i, (a, generation) in enumerate(zip(AGENT_IDS, generations)):
-        csv_path = os.path.join(experiment_dir, a, "fitnesses.csv")
-        if ids is None:
-            id_ = get_top_robot_ids(csv_path, generation=generation)[0]
-        else:
-            id_ = ids[i]
-        save_path = get_robot_save_path(os.path.join(experiment_dir, a), id_, generation)
-        print(f"Loading {save_path}")
-        structures[a] = Structure.from_save_path(save_path)
-
-    return structures
-
-
-def load_structures_ppo(experiment_dir: str):
-
-    structures: Dict[AgentID, Structure] = {
-        a: Structure.from_save_path(os.path.join(experiment_dir, a)) for a in AGENT_IDS
-    }
-
-    return structures
-
-
-def load_structures_coea_single(
-    experiment_dir: str,
+    agent_id: AgentID,
     generation: Optional[int] = None,
     id: Optional[int] = None,
-):
+) -> BaseRobotStructure:
+
+    csv_path = os.path.join(experiment_dir, agent_id, "fitnesses.csv")
+    if id is None:
+        id = get_top_robot_ids(csv_path, generation=generation)[0]
+    save_path = get_robot_save_path(os.path.join(experiment_dir, agent_id), id, generation)
+    print(f"Loading {save_path}")
+    return Structure.from_save_path(save_path)
+
+
+def load_structure_ppo(experiment_dir: str, agent_id: AgentID) -> BaseRobotStructure:
+
+    save_path = os.path.join(experiment_dir, agent_id)
+    print(f"Loading {save_path}")
+    return Structure.from_save_path(save_path)
+
+
+def load_structure_coea_single(
+    experiment_dir: str,
+    agent_id: AgentID,
+    generation: Optional[int] = None,
+    id: Optional[int] = None,
+) -> BaseRobotStructure:
 
     # Load args from metadata
     metadata_dir_path = os.path.join(experiment_dir, "metadata")
     args = load_args(metadata_dir_path)
 
-    # Determine agent IDs
+    # Determine which agent is evolved
     opponent_robot_id: AgentID = args.dummy_target
     self_robot_id: AgentID = get_opponent_id(opponent_robot_id)
 
-    # Load self robot structure
-    csv_path = os.path.join(experiment_dir, self_robot_id, "fitnesses.csv")
-    if id is None:
-        id = get_top_robot_ids(csv_path, generation=generation)[0]
-    save_path = get_robot_save_path(os.path.join(experiment_dir, self_robot_id), id, generation)
-    print(f"Loading {save_path}")
+    if agent_id == self_robot_id:
+        # Load evolved robot
+        csv_path = os.path.join(experiment_dir, self_robot_id, "fitnesses.csv")
+        if id is None:
+            id = get_top_robot_ids(csv_path, generation=generation)[0]
+        save_path = get_robot_save_path(os.path.join(experiment_dir, self_robot_id), id, generation)
+        print(f"Loading {save_path}")
+        return Structure.from_save_path(save_path)
+    else:
+        # Return dummy robot
+        print(f"Loading dummy robot ({args.dummy_body_type})")
+        return DummyRobotStructure(body_type=args.dummy_body_type)
 
-    structures: Dict[AgentID, BaseRobotStructure] = {
-        self_robot_id: Structure.from_save_path(save_path),
-        opponent_robot_id: DummyRobotStructure(body_type=args.dummy_body_type),
-    }
 
-    return structures
-
-
-def load_structures_ppo_single(experiment_dir: str):
+def load_structure_ppo_single(experiment_dir: str, agent_id: AgentID) -> BaseRobotStructure:
 
     with open(os.path.join(experiment_dir, "env_info.json"), "r") as f:
         env_info = json.load(f)
 
     self_robot_id = env_info["self_robot_id"]
-    opponent_robot_id = get_opponent_id(self_robot_id)
     dummy_body_type = env_info["dummy_body_type"]
 
-    structures: Dict[AgentID, BaseRobotStructure] = {
-        self_robot_id: Structure.from_save_path(os.path.join(experiment_dir, self_robot_id)),
-        opponent_robot_id: DummyRobotStructure(body_type=dummy_body_type),
-    }
-
-    return structures
+    if agent_id == self_robot_id:
+        # Load trained robot
+        save_path = os.path.join(experiment_dir, self_robot_id)
+        print(f"Loading {save_path}")
+        return Structure.from_save_path(save_path)
+    else:
+        # Return dummy robot
+        print(f"Loading dummy robot ({dummy_body_type})")
+        return DummyRobotStructure(body_type=dummy_body_type)
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--experiment-dir", type=str, required=True, help="Path to the experiment directory")
+    parser.add_argument(
+        "--experiment-dirs",
+        type=str,
+        nargs="+",
+        required=True,
+        help="Path(s) to experiment directories. Provide 1 or 2 paths. If 1 path, it will be used for both agents.",
+    )
     parser.add_argument(
         "--generations",
         type=int,
         nargs="+",
-        help="List of generations to visualize. If not provided, the latest generation will be used.",
+        help="List of generations to visualize (1 or 2 values). If not provided, the latest generation will be used.",
     )
     parser.add_argument(
         "--id",
         type=int,
         nargs="+",
-        help="List of robot ids to visualize. If not provided, the top robot id will be used.",
+        help="List of robot ids to visualize (1 or 2 values). If not provided, the best robot id will be used.",
     )
     parser.add_argument(
         "--movie-path",
@@ -126,31 +113,55 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # load structures
-    exp_type = extract_exp_type(args.experiment_dir)
-    structures: Dict[AgentID, BaseRobotStructure]
-    if exp_type == "coea":
-        structures = load_structures_coea(
-            args.experiment_dir,
-            generations=args.generations,
-            ids=args.id,
-        )
-    elif exp_type == "coea_single":
-        generation = args.generations[0] if args.generations else None
-        id = args.id[0] if args.id else None
-        structures = load_structures_coea_single(
-            args.experiment_dir,
-            generation=generation,
-            id=id,
-        )
-    elif exp_type == "ppo":
-        structures = load_structures_ppo(args.experiment_dir)
-    elif exp_type == "ppo_single":
-        structures = load_structures_ppo_single(args.experiment_dir)
+    # Process experiment directories
+    if len(args.experiment_dirs) == 1:
+        experiment_dirs = args.experiment_dirs * 2
+    elif len(args.experiment_dirs) == 2:
+        experiment_dirs = args.experiment_dirs
     else:
-        raise NotImplementedError(f"Experiment type '{exp_type}' is not supported.")
+        raise ValueError("Provide 1 or 2 experiment directories.")
 
-    env_name = get_env_name(args.experiment_dir)
+    # Process generations
+    if args.generations is None:
+        generations = [None, None]
+    elif len(args.generations) == 1:
+        generations = args.generations * 2
+    elif len(args.generations) == 2:
+        generations = args.generations
+    else:
+        raise ValueError("Provide 1 or 2 generation values.")
+
+    # Process ids
+    if args.id is None:
+        ids = [None, None]
+    elif len(args.id) == 1:
+        ids = args.id * 2
+    elif len(args.id) == 2:
+        ids = args.id
+    else:
+        raise ValueError("Provide 1 or 2 id values.")
+
+    # Load structures for each agent
+    structures: Dict[AgentID, BaseRobotStructure] = {}
+
+    for i, (agent_id, experiment_dir) in enumerate(zip(AGENT_IDS, experiment_dirs)):
+        exp_type = extract_exp_type(experiment_dir)
+        generation = generations[i]
+        id = ids[i]
+
+        if exp_type == "coea":
+            structures[agent_id] = load_structure_coea(experiment_dir, agent_id, generation, id)
+        elif exp_type == "coea_single":
+            structures[agent_id] = load_structure_coea_single(experiment_dir, agent_id, generation, id)
+        elif exp_type == "ppo":
+            structures[agent_id] = load_structure_ppo(experiment_dir, agent_id)
+        elif exp_type == "ppo_single":
+            structures[agent_id] = load_structure_ppo_single(experiment_dir, agent_id)
+        else:
+            raise NotImplementedError(f"Experiment type '{exp_type}' is not supported.")
+
+    # Get environment name from first experiment directory
+    env_name = get_env_name(experiment_dirs[0])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if args.movie_path is not None:
